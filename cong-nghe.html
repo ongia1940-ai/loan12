@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cây Công Nghệ 12 Sứ Quân · Demo UI</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --gold:#d8a93f; --gold-d:#9a7326; --wood:#1c130b; --wood2:#2a1d11;
+    --panel:#17100a; --red:#c0392b; --green:#2e9e63; --blue:#2f7fd0;
+  }
+  body{
+    font-family:'Segoe UI',Arial,sans-serif; color:#e9dcc0; min-height:100vh;
+    background:#0d0a06 url('') ; background:radial-gradient(1200px 700px at 50% -10%, #3a2a14 0%, #14100a 55%, #0a0805 100%);
+    padding:14px; overflow-x:hidden;
+  }
+  /* ===== khung gỗ vàng kiểu cung đình ===== */
+  .frame{
+    background:linear-gradient(180deg,#241a0e,#150e07);
+    border:2px solid var(--gold-d); border-radius:10px; position:relative;
+    box-shadow:0 0 0 1px #000, 0 10px 30px rgba(0,0,0,.6), inset 0 0 40px rgba(0,0,0,.5);
+  }
+  .frame::before{content:'';position:absolute;inset:5px;border:1px solid rgba(216,169,63,.35);border-radius:7px;pointer-events:none;}
+  .corner{position:absolute;width:22px;height:22px;border:3px solid var(--gold);z-index:2;}
+  .c-tl{top:-3px;left:-3px;border-right:0;border-bottom:0;border-radius:8px 0 0 0;}
+  .c-tr{top:-3px;right:-3px;border-left:0;border-bottom:0;border-radius:0 8px 0 0;}
+  .c-bl{bottom:-3px;left:-3px;border-right:0;border-top:0;border-radius:0 0 0 8px;}
+  .c-br{bottom:-3px;right:-3px;border-left:0;border-top:0;border-radius:0 0 8px 0;}
+  h1.title{
+    text-align:center; font-size:26px; letter-spacing:6px; color:var(--gold);
+    text-shadow:0 2px 0 #000, 0 0 18px rgba(216,169,63,.35); margin:6px 0 12px;
+  }
+  /* ===== thanh tài nguyên trên ===== */
+  #topbar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;}
+  .res-chip{display:flex;align-items:center;gap:8px;background:#14100a;border:1px solid var(--gold-d);
+    border-radius:8px;padding:7px 14px;font-size:14px;min-width:130px;justify-content:center;}
+  .res-chip b{color:#ffd97a;font-size:15px;}
+  .res-chip .ic{font-size:18px;}
+  /* ===== bố cục chính ===== */
+  #layout{display:grid;grid-template-columns:250px 1fr 300px;gap:12px;max-width:1460px;margin:0 auto;align-items:start;}
+  @media(max-width:1100px){#layout{grid-template-columns:1fr;}}
+  .panel-title{background:linear-gradient(180deg,#3a2b15,#241a0c);color:var(--gold);text-align:center;
+    font-size:13px;letter-spacing:2px;padding:8px;border-bottom:1px solid var(--gold-d);border-radius:8px 8px 0 0;font-weight:700;}
+  /* ===== bảng tài nguyên trái ===== */
+  .res-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(216,169,63,.15);font-size:14px;}
+  .res-row:last-child{border-bottom:0;}
+  .res-row .ic{font-size:20px;width:28px;text-align:center;}
+  .res-row .nm{flex:1;color:#cbb98f;}
+  .res-row b{color:#ffd97a;font-size:15px;}
+  .res-rate{font-size:11px;color:#7fa36a;margin-left:6px;}
+  /* ===== cây công nghệ giữa ===== */
+  .tabs{display:flex;gap:8px;padding:10px 12px 0;}
+  .tab{flex:1;text-align:center;padding:9px 4px;cursor:pointer;border:1px solid var(--gold-d);border-bottom:0;border-radius:8px 8px 0 0;
+    background:#100c07;color:#a68d5f;font-size:12px;letter-spacing:1px;font-weight:700;}
+  .tab small{display:block;font-size:11px;font-weight:400;letter-spacing:0;}
+  .tab.active{background:linear-gradient(180deg,#4a3517,#2a1f0e);color:var(--gold);}
+  #techGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;padding:14px;}
+  .tech{border:2px solid #5a4526;border-radius:8px;background:#120d07;padding:8px 6px;text-align:center;cursor:pointer;position:relative;min-height:118px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:transform .12s;}
+  .tech:hover{transform:translateY(-2px);}
+  .tech .tic{font-size:34px;line-height:1;}
+  .tech .tnm{font-size:12px;font-weight:700;color:#e9dcc0;}
+  .tech .tcost{font-size:11px;color:#9db3c8;}
+  .tech.done{border-color:var(--green);box-shadow:0 0 12px rgba(46,158,99,.45);}
+  .tech.done::after{content:'✔';position:absolute;top:4px;right:8px;color:var(--green);font-weight:800;font-size:16px;}
+  .tech.researching{border-color:var(--blue);box-shadow:0 0 12px rgba(47,127,208,.5);}
+  .tech.locked{opacity:.55;cursor:not-allowed;}
+  .tech.locked::after{content:'🔒';position:absolute;top:4px;right:8px;font-size:14px;}
+  .tech.selected{outline:2px solid var(--gold);}
+  .prog{width:90%;height:8px;background:#000;border:1px solid #555;border-radius:4px;overflow:hidden;margin-top:2px;}
+  .prog i{display:block;height:100%;background:linear-gradient(90deg,#2f7fd0,#6db3ff);width:0%;}
+  .ptime{font-size:11px;color:#9db3c8;}
+  /* ===== panel phải: thông tin công nghệ ===== */
+  #infoBody{padding:14px;font-size:13.5px;line-height:1.65;}
+  #infoBody .big-ic{font-size:44px;text-align:center;margin-bottom:6px;}
+  #infoBody h3{color:var(--gold);text-align:center;font-size:17px;margin-bottom:2px;}
+  #infoBody .lvl{text-align:center;color:#9db3c8;font-size:12px;margin-bottom:10px;}
+  .eff{color:#7fd08a;} .cost{color:#ffd97a;} .req{color:#e08a8a;}
+  .btn{display:block;width:100%;margin-top:12px;padding:12px;border:0;border-radius:8px;cursor:pointer;
+    font-size:15px;font-weight:800;letter-spacing:2px;color:#fff;}
+  .btn-gold{background:linear-gradient(180deg,#e8b93f,#a87b1e);text-shadow:0 1px 2px #000;}
+  .btn-gold:disabled{background:#4a4238;color:#999;cursor:not-allowed;text-shadow:none;}
+  .btn-green{background:linear-gradient(180deg,#3fae6c,#247a44);}
+  .btn-red{background:linear-gradient(180deg,#d0533f,#8e2f20);}
+  /* ===== bảng thông tin quân ===== */
+  #unitBody{padding:14px;}
+  .unit-pick{display:flex;gap:8px;margin-bottom:12px;}
+  .unit-pick button{flex:1;padding:8px 4px;background:#100c07;border:1px solid var(--gold-d);border-radius:6px;color:#e9dcc0;cursor:pointer;font-size:20px;}
+  .unit-pick button.active{border-color:var(--gold);background:#2a1f0e;}
+  .u-card{display:flex;gap:12px;align-items:center;margin-bottom:10px;}
+  .u-face{font-size:46px;background:#0c0906;border:1px solid var(--gold-d);border-radius:8px;width:74px;height:74px;display:flex;align-items:center;justify-content:center;}
+  .u-name{font-size:16px;font-weight:800;color:var(--gold);}
+  .u-type{font-size:12px;color:#9db3c8;}
+  .hpbar{height:16px;background:#300;border:1px solid #000;border-radius:8px;overflow:hidden;margin:8px 0 10px;position:relative;}
+  .hpbar i{display:block;height:100%;background:linear-gradient(90deg,#37c24a,#7bf08a);}
+  .hpbar span{position:absolute;inset:0;text-align:center;font-size:11px;line-height:15px;color:#fff;text-shadow:0 1px 2px #000;font-weight:700;}
+  .stat{display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13.5px;border-bottom:1px dashed rgba(216,169,63,.2);}
+  .stat b{color:#ffd97a;margin-left:auto;}
+  /* ===== dialog sụp đổ ===== */
+  #conquestWrap{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:16px;}
+  #conquestWrap.show{display:flex;}
+  #conquest{max-width:560px;width:100%;text-align:center;padding:30px 26px;border:3px solid #e33;box-shadow:0 0 40px rgba(230,40,40,.5), inset 0 0 40px rgba(0,0,0,.6);}
+  #conquest h2{color:#ff5a4a;font-size:30px;letter-spacing:4px;margin-bottom:12px;text-shadow:0 0 16px rgba(255,60,40,.7);}
+  #conquest p{font-size:15px;line-height:1.7;margin-bottom:20px;color:#f0e2c4;}
+  .cq-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+  .cq-btns .btn{width:auto;padding:13px 30px;}
+  /* ===== toast + log ===== */
+  #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#14100a;border:1px solid var(--gold);
+    color:#ffe9a8;padding:10px 22px;border-radius:8px;display:none;z-index:60;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.6);}
+  #demoBar{max-width:1460px;margin:12px auto 0;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  #demoBar button{background:#241a0e;border:1px solid var(--gold-d);color:var(--gold);border-radius:8px;padding:9px 18px;cursor:pointer;font-size:13px;font-weight:700;}
+  #demoBar button:hover{background:#33240f;}
+  .note{max-width:1460px;margin:10px auto 0;text-align:center;color:#8a7a5c;font-size:12.5px;line-height:1.7;}
+</style>
+</head>
+<body>
+<h1 class="title">⚔ CÂY CÔNG NGHỆ 12 SỨ QUÂN ⚔</h1>
+
+<div id="topbar"></div>
+
+<div id="layout">
+  <!-- bảng tài nguyên -->
+  <div class="frame"><span class="corner c-tl"></span><span class="corner c-tr"></span><span class="corner c-bl"></span><span class="corner c-br"></span>
+    <div class="panel-title">TÀI NGUYÊN</div>
+    <div id="resPanel"></div>
+  </div>
+
+  <!-- cây công nghệ -->
+  <div class="frame"><span class="corner c-tl"></span><span class="corner c-tr"></span><span class="corner c-bl"></span><span class="corner c-br"></span>
+    <div class="panel-title">CÂY CÔNG NGHỆ</div>
+    <div class="tabs" id="tabs"></div>
+    <div id="techGrid"></div>
+  </div>
+
+  <!-- cột phải: thông tin công nghệ + thông tin quân -->
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <div class="frame"><span class="corner c-tl"></span><span class="corner c-tr"></span><span class="corner c-bl"></span><span class="corner c-br"></span>
+      <div class="panel-title">THÔNG TIN CÔNG NGHỆ</div>
+      <div id="infoBody"><p style="color:#8a7a5c;text-align:center;padding:20px 0;">Chọn một công nghệ<br>để xem chi tiết</p></div>
+    </div>
+    <div class="frame"><span class="corner c-tl"></span><span class="corner c-tr"></span><span class="corner c-bl"></span><span class="corner c-br"></span>
+      <div class="panel-title">THÔNG TIN QUÂN</div>
+      <div id="unitBody"></div>
+    </div>
+  </div>
+</div>
+
+<div id="demoBar">
+  <button id="btnConquest">⚔ Giả lập: Hạ Đại Bản Doanh địch</button>
+  <button id="btnBonus">＋ Nhận tiếp tế (mỗi loại +500)</button>
+  <button id="btnReset">↺ Chơi lại từ đầu</button>
+</div>
+<p class="note">Bản demo UI tương tác: tài nguyên tự tăng theo thời gian · nghiên cứu tốn tài nguyên và chờ thời gian thật ·<br>
+mở khóa công nghệ theo điều kiện tiên quyết · lựa chọn Thu Phục / Trảm Tướng cho hậu quả khác nhau.</p>
+
+<!-- dialog sụp đổ -->
+<div id="conquestWrap">
+  <div id="conquest" class="frame">
+    <h2>ĐẠI BẢN DOANH SỤP ĐỔ</h2>
+    <p id="cqText">Đại bản doanh của <b style="color:#ffd97a">Kiều Thuận</b> đã bị phá hủy!<br>Bạn muốn xử lý Tướng địch thế nào?</p>
+    <div class="cq-btns">
+      <button class="btn btn-green" id="btnRecruit">THU PHỤC</button>
+      <button class="btn btn-red" id="btnExecute">TRẢM TƯỚNG</button>
+    </div>
+    <p style="font-size:12px;color:#9a8a6a;margin:14px 0 0;" id="cqHint"></p>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ================= DỮ LIỆU ================= */
+const RES = [
+  {id:'food', name:'Thực phẩm', ic:'🌾', max:3000},
+  {id:'wood', name:'Gỗ', ic:'🪵'},
+  {id:'stone',name:'Đá', ic:'🪨'},
+  {id:'gold', name:'Vàng', ic:'🪙'},
+  {id:'iron', name:'Sắt', ic:'🔩'},
+];
+const TECHS = [
+  // Binh bị
+  {id:'voi', tab:'mil', name:'Voi Chiến', ic:'🐘', cost:{food:400,wood:350}, time:150, req:null,
+   desc:'Thuần dưỡng voi chiến Đằng Châu.', eff:['+25% máu Voi Chiến','Mở khóa: Voi Chiến']},
+  {id:'no-lien-chau', tab:'mil', name:'Nỏ Liên Châu', ic:'🏹', cost:{wood:300,iron:120}, time:120, req:null,
+   desc:'Nỏ bắn nhiều tên liên tiếp của Cổ Loa.', eff:['Nỏ thủ +2 tấn công','Mở khóa: Nỏ Liên Châu']},
+  {id:'linh-khien', tab:'mil', name:'Lính Khiên', ic:'🛡️', cost:{food:250,wood:200}, time:90, req:null,
+   desc:'Đội hình khiên vững chắc.', eff:['Bộ binh +3 giáp']},
+  {id:'ren-sat', tab:'mil', name:'Rèn Sắt', ic:'⚒️', cost:{wood:200,iron:150}, time:100, req:['linh-khien'],
+   desc:'Lò rèn đúc vũ khí sắt.', eff:['Toàn quân +2 tấn công']},
+  {id:'phuc-kich', tab:'mil', name:'Chiến Thuật Phục Kích', ic:'🌲', cost:{food:300,gold:200}, time:110, req:['ren-sat'],
+   desc:'Phục kích trong rừng rậm.', eff:['+20% sát thương khi phục kích']},
+  {id:'thanh-da', tab:'mil', name:'Thành Đá Kiên Cố', ic:'🏯', cost:{stone:500,wood:300}, time:180, req:['ren-sat'],
+   desc:'Tường thành đá ong vững chãi.', eff:['Công trình +40% máu']},
+  // Kinh tế
+  {id:'thuyen-tre', tab:'eco', name:'Thuyền Tre', ic:'🛶', cost:{food:400,wood:350,stone:150,gold:200,iron:80}, time:150, req:null,
+   desc:'Cải tiến khả năng di chuyển và sức tải cho thuyền tre trên sông nước.', eff:['+15% Tốc độ di chuyển','+25% Sức tải hàng']},
+  {id:'don-dien', tab:'eco', name:'Đồn Điền', ic:'🌱', cost:{food:200,wood:250}, time:80, req:null,
+   desc:'Khai hoang lập đồn điền.', eff:['+30% tốc độ thu Thực phẩm']},
+  {id:'thue-gao', tab:'eco', name:'Thuế Gạo', ic:'🧺', cost:{gold:300}, time:70, req:['don-dien'],
+   desc:'Chế độ thuế thóc gạo.', eff:['+200 Thực phẩm mỗi phút']},
+  {id:'khai-mo', tab:'eco', name:'Khai Mỏ', ic:'⛏️', cost:{food:250,wood:200}, time:90, req:null,
+   desc:'Mở hầm mỏ khai thác.', eff:['+30% tốc độ thu Đá, Vàng, Sắt']},
+  // Vương quyền
+  {id:'vuong-uy', tab:'roy', name:'Vương Uy', ic:'👑', cost:{gold:500,food:400}, time:160, req:null,
+   desc:'Uy danh thiên tử.', eff:['Quân địch -10% sĩ khí']},
+  {id:'chieu-hien', tab:'roy', name:'Chiêu Hiền Đãi Sĩ', ic:'📜', cost:{gold:350,food:300}, time:120, req:['vuong-uy'],
+   desc:'Mở khoa thi, trọng dụng hiền tài.', eff:['Tướng thu phục +1 cấp sao']},
+];
+const TABS = {mil:['⚔','Binh Bị'], eco:['🌾','Kinh Tế'], roy:['👑','Vương Quyền']};
+const UNITS = [
+  {name:'Tướng Quân', type:'Tướng · Kỵ binh', ic:'🐘', hp:450, maxhp:450, atk:35, armor:20, spd:14},
+  {name:'Nỏ Thủ Liên Châu', type:'Tầm xa · Bộ binh', ic:'🏹', hp:120, maxhp:120, atk:22, armor:4, spd:11},
+  {name:'Dân Phu', type:'Kinh tế', ic:'🧑‍🌾', hp:60, maxhp:60, atk:3, armor:0, spd:12},
+];
+const LORDS = ['Kiều Thuận','Nguyễn Khoan','Trần Lãm','Đỗ Cảnh Thạc','Lê Hoàn'];
+
+/* ================= TRẠNG THÁI ================= */
+let S;
+function newState(){
+  const techs = {};
+  TECHS.forEach(t => techs[t.id] = {status: t.req ? 'locked' : 'available', prog:0});
+  return {
+    res:{food:2450, wood:1890, stone:950, gold:1560, iron:720},
+    rate:{food:6, wood:4, stone:2, gold:2, iron:1.5},
+    techs, selTech:null, tab:'mil', unit:0,
+    recruited:[], executed:0, kills:0,
+  };
+}
+function load(){ try{ const s = JSON.parse(localStorage.getItem('loan12_techdemo')); if(s && s.res) return s; }catch(e){} return newState(); }
+function save(){ localStorage.setItem('loan12_techdemo', JSON.stringify(S)); }
+S = load();
+
+/* ================= TIỆN ÍCH ================= */
+const $ = id => document.getElementById(id);
+const fmt = n => Math.floor(n).toLocaleString('vi-VN');
+const mmss = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+let toastT=null;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(toastT); toastT=setTimeout(()=>t.style.display='none',2600); }
+function costText(c){ return Object.entries(c).map(([k,v])=>`${RES.find(r=>r.id===k).ic} ${fmt(v)}`).join(' · '); }
+function canAfford(c){ return Object.entries(c).every(([k,v])=>S.res[k]>=v); }
+function payCost(c){ Object.entries(c).forEach(([k,v])=>{ S.res[k]=Math.max(0,S.res[k]-v); }); }
+
+/* ================= VẼ UI ================= */
+function drawTop(){
+  $('topbar').innerHTML = RES.map(r=>`<div class="res-chip"><span class="ic">${r.ic}</span><b>${fmt(S.res[r.id])}</b><span style="color:#8a7a5c;font-size:11px">${r.max?'/'+fmt(r.max):''}</span></div>`).join('');
+}
+function drawResPanel(){
+  $('resPanel').innerHTML = RES.map(r=>`<div class="res-row"><span class="ic">${r.ic}</span><span class="nm">${r.name}<span class="res-rate">+${S.rate[r.id]}/s</span></span><b>${fmt(S.res[r.id])}${r.max?' / '+fmt(r.max):''}</b></div>`).join('');
+}
+function drawTabs(){
+  $('tabs').innerHTML = Object.entries(TABS).map(([k,[ic,nm]])=>`<div class="tab ${S.tab===k?'active':''}" data-tab="${k}">${ic}<small>${nm}</small></div>`).join('');
+  document.querySelectorAll('.tab').forEach(el=>el.onclick=()=>{S.tab=el.dataset.tab;S.selTech=null;draw();save();});
+}
+function techById(id){ return TECHS.find(t=>t.id===id); }
+function drawGrid(){
+  const g = $('techGrid');
+  g.innerHTML = TECHS.filter(t=>t.tab===S.tab).map(t=>{
+    const st = S.techs[t.id];
+    let extra='';
+    if(st.status==='researching') extra=`<div class="prog"><i style="width:${st.prog}%"></i></div><div class="ptime">${mmss(st.left)} · ${Math.floor(st.prog)}%</div>`;
+    else extra=`<div class="tcost">${costText(t.cost)}</div>`;
+    return `<div class="tech ${st.status} ${S.selTech===t.id?'selected':''}" data-id="${t.id}">
+      <div class="tic">${t.ic}</div><div class="tnm">${t.name}</div>${extra}</div>`;
+  }).join('');
+  g.querySelectorAll('.tech').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.id, st=S.techs[id];
+    if(st.status==='locked'){ toast('🔒 Cần nghiên cứu trước: '+techById(techById(id).req[0]).name); return; }
+    S.selTech=id; draw(); save();
+  });
+}
+function drawInfo(){
+  const b=$('infoBody');
+  if(!S.selTech){ b.innerHTML='<p style="color:#8a7a5c;text-align:center;padding:20px 0;">Chọn một công nghệ<br>để xem chi tiết</p>'; return; }
+  const t=techById(S.selTech), st=S.techs[t.id];
+  const reqOk = !t.req || t.req.every(r=>S.techs[r].status==='done');
+  const afford = canAfford(t.cost);
+  let btn='';
+  if(st.status==='done') btn='<button class="btn btn-gold" disabled>ĐÃ NGHIÊN CỨU ✔</button>';
+  else if(st.status==='researching') btn=`<button class="btn btn-gold" disabled>ĐANG NGHIÊN CỨU ${Math.floor(st.prog)}%</button>`;
+  else if(!reqOk) btn=`<button class="btn btn-gold" disabled>CHƯA ĐỦ ĐIỀU KIỆN</button>`;
+  else btn=`<button class="btn btn-gold" id="btnResearch" ${afford?'':'disabled'}>NGHIÊN CỨU</button>`;
+  b.innerHTML=`<div class="big-ic">${t.ic}</div><h3>${t.name}</h3><div class="lvl">Cấp 1</div>
+    <p style="margin-bottom:8px;">${t.desc}</p>
+    <p class="eff"><b>Hiệu quả:</b><br>${t.eff.map(e=>'• '+e).join('<br>')}</p>
+    <p class="cost" style="margin-top:8px;"><b>Công thức:</b><br>${costText(t.cost)}<br>⏱ ${mmss(t.time)}</p>
+    ${t.req?`<p class="req" style="margin-top:8px;"><b>Yêu cầu:</b> ${t.req.map(r=>techById(r).name).join(', ')}</p>`:''}
+    ${btn}`;
+  const br=$('btnResearch');
+  if(br) br.onclick=()=>{
+    if(!canAfford(t.cost)){ toast('Không đủ tài nguyên!'); return; }
+    payCost(t.cost);
+    st.status='researching'; st.prog=0; st.left=t.time;
+    toast(`🔬 Bắt đầu nghiên cứu: ${t.name}`);
+    draw(); save();
+  };
+}
+function drawUnit(){
+  const u=UNITS[S.unit];
+  $('unitBody').innerHTML=`
+    <div class="unit-pick">${UNITS.map((x,i)=>`<button data-i="${i}" class="${i===S.unit?'active':''}">${x.ic}</button>`).join('')}</div>
+    <div class="u-card"><div class="u-face">${u.ic}</div><div><div class="u-name">${u.name}</div><div class="u-type">${u.type}</div></div></div>
+    <div class="hpbar"><i style="width:${u.hp/u.maxhp*100}%"></i><span>HP: ${u.hp}/${u.maxhp}</span></div>
+    <div class="stat">⚔️ Tấn công <b>${u.atk}</b></div>
+    <div class="stat">🛡️ Giáp <b>${u.armor}</b></div>
+    <div class="stat">🥾 Tốc độ <b>${u.spd}</b></div>`;
+  document.querySelectorAll('.unit-pick button').forEach(el=>el.onclick=()=>{S.unit=+el.dataset.i;draw();});
+}
+function draw(){ drawTop(); drawResPanel(); drawTabs(); drawGrid(); drawInfo(); drawUnit(); }
+
+/* ================= DIALOG SỤP ĐỔ ================= */
+function showConquest(){
+  const lord = LORDS[Math.floor(Math.random()*LORDS.length)];
+  $('cqText').innerHTML=`Đại bản doanh của <b style="color:#ffd97a">${lord}</b> đã bị phá hủy!<br>Bạn muốn xử lý Tướng địch thế nào?`;
+  $('cqHint').textContent='Thu Phục: mở binh chủng độc quyền, nhận 70% sản lượng căn cứ · Trảm Tướng: +1000 Lương, +600 Vàng';
+  $('conquestWrap').classList.add('show');
+  $('btnRecruit').onclick=()=>{
+    $('conquestWrap').classList.remove('show');
+    S.recruited.push(lord);
+    S.res.food=Math.min(3000,S.res.food+700);
+    toast(`🤝 Đã thu phục ${lord}! Mở khóa binh chủng độc quyền, +700 Thực phẩm`);
+    draw(); save();
+  };
+  $('btnExecute').onclick=()=>{
+    $('conquestWrap').classList.remove('show');
+    S.executed++;
+    S.res.food=Math.min(3000,S.res.food+1000); S.res.gold+=600;
+    toast(`⚔️ Đã trảm tướng ${lord}! +1000 Thực phẩm, +600 Vàng`);
+    draw(); save();
+  };
+}
+
+/* ================= VÒNG LẶP GAME ================= */
+let last=Date.now();
+setInterval(()=>{
+  const now=Date.now(), dt=Math.min(2,(now-last)/1000); last=now;
+  // tài nguyên tăng
+  RES.forEach(r=>{ const m=r.max||1e9; S.res[r.id]=Math.min(m, S.res[r.id]+S.rate[r.id]*dt); });
+  // nghiên cứu chạy
+  let changed=false;
+  TECHS.forEach(t=>{
+    const st=S.techs[t.id];
+    if(st.status==='researching'){
+      st.left-=dt; st.prog=Math.min(100,(1-st.left/t.time)*100); changed=true;
+      if(st.left<=0){
+        st.status='done'; st.prog=100;
+        // mở khóa công nghệ phụ thuộc
+        TECHS.forEach(x=>{ if(x.req&&x.req.includes(t.id)&&x.req.every(r=>S.techs[r].status==='done')) S.techs[x.id].status='available'; });
+        toast(`✔ Nghiên cứu xong: ${t.name}`);
+      }
+    }
+  });
+  drawTop(); drawResPanel();
+  if(changed) drawGrid();
+  if(S.selTech) drawInfo();
+},500);
+setInterval(save, 5000);
+
+/* ================= NÚT DEMO ================= */
+$('btnConquest').onclick=showConquest;
+$('btnBonus').onclick=()=>{ RES.forEach(r=>{const m=r.max||1e9;S.res[r.id]=Math.min(m,S.res[r.id]+500);}); toast('📦 Đã nhận tiếp tế!'); draw(); save(); };
+$('btnReset').onclick=()=>{ if(confirm('Chơi lại từ đầu?')){ S=newState(); draw(); save(); toast('↺ Đã đặt lại demo'); } };
+
+draw();
+</script>
+</body>
+</html>
