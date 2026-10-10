@@ -130,4 +130,26 @@ render = function(){
 
   for(const e of dmg) game.effects.push(e);
 };
+/* ---------- 5. Tiếng "tách" xác nhận lệnh kiểu AoE II ---------- */
+const _order = Loan12.Game.prototype.order;
+let lastTick = 0;
+function tick(){
+  const now = performance.now();
+  if(now - lastTick < 150 || !actx) return;
+  lastTick = now;
+  try{
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    o.type='square'; o.frequency.value=880;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.06, t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+0.07);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t+0.09);
+  }catch(e){}
+}
+Loan12.Game.prototype.order = function(ids, point, targetId, attackMove){
+  if(ids && ids.length) tick();
+  return _order.call(this, ids, point, targetId, attackMove);
+};
+
 })();

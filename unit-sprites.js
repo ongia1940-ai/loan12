@@ -80,19 +80,26 @@ function kit(kind,team,look,variant,style,gen){const uk=kind;kind=archOf(kind);c
   }}
  return k;}
 // Pose -> joint targets. Returns hand positions, weapon angle (radians above forward), etc.
-function pose(kind,action,frame,k){const n=FRAMES[action]||1,t=(frame+.5)/n,walk=action==='walk',sw=walk?Math.sin(t*TAU):0,lift=walk?Math.abs(Math.cos(t*TAU)):0;
- const o={hip:.44+(walk?lift*.025:0)+(action==='idle'?Math.sin(t*TAU)*.006:0),lean:0,sway:action==='idle'?Math.sin(t*TAU)*.012:0,footL:{f:sw*.17,up:Math.max(0,-Math.cos(t*TAU))*.05},footR:{f:-sw*.17,up:Math.max(0,Math.cos(t*TAU))*.05},
-  handL:{f:-sw*.13+.02,sd:-.2,up:.45},handR:{f:sw*.13+.06,sd:.2,up:.46},wAng:1.35,strike:0,thrown:false};
- const strike=action==='attack'?Math.sin(t*Math.PI):0,wind=action==='attack'?clamp(1-t*3,0,1):0,follow=action==='attack'?clamp((t-.33)/.4,0,1):0;o.strike=strike;
- const w=k.weapon;
- if(w==='halberd'||w==='hero:spear'||w==='hero:staff'||w==='hero:halberd'||w==='greatsaber'||w==='hero:greatsaber'){o.handR={f:.1+follow*.32-wind*.12,sd:.15,up:.5+strike*.12};o.handL={f:.04+follow*.22,sd:.04,up:.52};o.wAng=mixN(1.42,.12,clamp(strike*1.4,0,1));o.lean=follow*.08-wind*.04;}
- else if(w==='machete'||w==='sword'||w==='saber'||w==='hero:sword'||w==='hero:axe'||w==='tool'){const raise=action==='attack'?(t<.35?t/.35:clamp(1-(t-.35)/.35,0,1)):0;o.handR={f:.12+follow*.2-raise*.1,sd:.16,up:.46+raise*.42};o.wAng=action==='attack'?mixN(1.9,-.45,follow):(walk?1.05:.95);o.lean=follow*.07;
-  if(action==='work'){const ch=Math.sin(t*TAU);o.handR={f:.2,sd:.1,up:.6+ch*.22};o.handL={f:.18,sd:-.02,up:.55+ch*.18};o.wAng=ch*1.1+.2;o.lean=.08;}}
- else if(w==='bow'||w==='hero:bow'){const ready=action==='attack'||action==='idle';o.handL={f:ready?.34:.12,sd:ready?.02:-.17,up:ready?.66:.45};o.handR={f:action==='attack'?mixN(.28,-.02,clamp(t*2,0,1)):.1,sd:.12,up:ready?.66:.46};o.draw=action==='attack'?clamp(t*2,0,1)*(t<.8?1:0):0;}
- else if(w==='crossbow'||w==='divineCrossbow'){o.handL={f:w==='divineCrossbow'?.39:.34,sd:-.03,up:.58};o.handR={f:.12-strike*(w==='divineCrossbow'?.1:.06),sd:.08,up:.58};o.recoil=strike*(w==='divineCrossbow'?.1:.06);o.lean=w==='divineCrossbow'?-strike*.035:0;}
- else if(w==='javelin'){const back=action==='attack'?(t<.45?t/.45:0):0;o.handR={f:action==='attack'?(t<.45?-.18*back:.36):.08,sd:.17,up:action==='attack'?.82:.5};o.wAng=action==='attack'?(t<.45?.25:-.1):1.3;o.thrown=action==='attack'&&t>.55;o.handL={f:.12,sd:-.17,up:.52};o.lean=action==='attack'&&t>=.45?.1:-.04*back;}
+function pose(kind,action,frame,k){const n=FRAMES[action]||1,t=(frame+.5)/n,walk=action==='walk',idle=action==='idle',atk=action==='attack',work=action==='work';
+ // Chu ky buoc kieu AoE: sai chan rong, nhac got ro, nguoi nhun 2 nhip, tay danh nguoc pha.
+ const sw=walk?Math.sin(t*TAU):0,bob=walk?Math.abs(Math.sin(t*TAU)):0;
+ const o={hip:.44+(walk?(.02+bob*.06):0)+(idle?Math.sin(t*TAU)*.015:0),lean:walk?.08:0,lunge:0,sway:idle?Math.sin(t*TAU)*.022:0,
+  headBob:walk?Math.sin(t*TAU*2+1.3)*.022:0,
+  footL:{f:sw*.24,up:Math.max(0,-Math.cos(t*TAU))*.11},footR:{f:-sw*.24,up:Math.max(0,Math.cos(t*TAU))*.11},
+  handL:{f:-sw*.17+.02,sd:-.2,up:.45-bob*.035},handR:{f:sw*.17+.06,sd:.2,up:.46-bob*.035},
+  wAng:walk?1.02:(idle?.95+Math.sin(t*TAU+2)*.06:1.35),strike:0,thrown:false,wind:0,rec:0};
+ // Don danh 3 pha: lay da (gio vu khi, nga nguoi) -> bo (lao toi) -> thu ve.
+ if(atk){const wind=t<.32?Math.sin(t/.32*Math.PI/2):0,strk=t<.32?0:t<.62?Math.sin((t-.32)/.30*Math.PI):0,rec=t<.62?0:(t-.62)/.38;
+  o.wind=wind;o.rec=rec;o.strike=strk;o.lean=-.10*wind+.17*strk;o.lunge=.22*strk;o.hip=.44-.04*wind-.012*strk;o.sway=0;o.headBob=0;}
+ const strike=o.strike,wind=o.wind,w=k.weapon;
+ if(w==='halberd'||w==='hero:spear'||w==='hero:staff'||w==='hero:halberd'||w==='greatsaber'||w==='hero:greatsaber'){o.handR={f:.1+o.lunge*.9-wind*.14,sd:.15,up:.5+strike*.1+wind*.06};o.handL={f:.04+o.lunge*.6,sd:.04,up:.52+wind*.04};o.wAng=1.35+wind*.4-strike*1.6;}
+ else if(w==='machete'||w==='sword'||w==='saber'||w==='hero:sword'||w==='hero:axe'||w==='tool'){o.handR={f:.12+o.lunge*.8-wind*.12,sd:.16,up:.46+wind*.45-strike*.12};o.wAng=1.0+wind*1.05-strike*1.95;
+  if(work){const ch=Math.sin(t*TAU);o.handR={f:.2,sd:.1,up:.62+ch*.3};o.handL={f:.18,sd:-.02,up:.56+ch*.24};o.wAng=ch*1.35+.2;o.lean=.1;o.hip=.44-Math.max(0,ch)*.035;}}
+ else if(w==='bow'||w==='hero:bow'){const ready=atk||idle,draw=atk?(t<.5?t/.5:(t<.62?1:Math.max(0,1-(t-.62)*5))):0;o.handL={f:ready?.34:.12,sd:ready?.02:-.17,up:ready?.66:.45};o.handR={f:atk?mixN(.28,-.04,draw):.1,sd:.12,up:ready?.66:.46};o.draw=draw;o.lean=atk?-.04*draw:0;}
+ else if(w==='crossbow'||w==='divineCrossbow'){o.handL={f:w==='divineCrossbow'?.39:.34,sd:-.03,up:.58};o.handR={f:.12-strike*(w==='divineCrossbow'?.12:.07),sd:.08,up:.58-strike*.03};o.recoil=strike*(w==='divineCrossbow'?.12:.07);o.lean=-strike*.06;o.hip=.44-strike*.015;}
+ else if(w==='javelin'){if(atk){o.handR={f:-.26*wind+.4*strike,sd:.17,up:.55+.32*wind-.18*strike};o.wAng=.35+wind*1.25-strike*1.6;o.thrown=t>.6;o.handL={f:.12+o.lunge*.4,sd:-.17,up:.52};}else{o.handR={f:.08,sd:.17,up:.5};o.wAng=1.3;o.handL={f:.12,sd:-.17,up:.52};}}
  else if(w==='scroll'||w==='hero:scroll'||w==='hero:fan'){o.handR={f:.2,sd:.08,up:.56+strike*.15};o.handL={f:.2,sd:-.08,up:.55};}
- if(action==='cmd'){o.handR={f:.18,sd:.2,up:1.0+Math.sin(t*TAU)*.05};o.wAng=1.5;}
+ if(action==='cmd'){o.handR={f:.18,sd:.2,up:1.0+Math.sin(t*TAU)*.06};o.wAng=1.5;o.lean=.03;}
  return o;}
 function headgear(c,P,k,top,r,front){const hat=k.hat,col=k.hatColor,dark=shadeHex(col.startsWith('#')?col:'#888888',.62);
  if(hat==='nonla'){const base=ring(P,0,0,top-.02,.31,16),apex=P(0,0,top+.19);fillPoly(c,hull([...base,apex]),col,'#6d5d36',1);fillPoly(c,base,null,dark,1);}
@@ -188,9 +195,9 @@ function weaponDraw(c,P,k,o,front,s){const w=k.weapon,h=o.handR,ang=o.wAng,dirAt
 function drawInfantry(c,kind,dir,action,frame,team,s,opts={}){const k=kit(kind,team,opts.look,opts.variant||0,opts.style,opts.general);kind=archOf(kind);k.toolKind=opts.toolKind||'food';if(opts.flag&&MILITARY.has(kind))k.flag=k.flag||true;s*=k.scale*1.1;
  const mount=opts.mount&&opts.mount!=='elephant'?opts.mount:null,riding=!!opts.mount,lift=opts.lift!=null?opts.lift:mount==='buffalo'?.26:mount?.3:0;
  const R=rig(dir,s),sa=R.sa,ca=R.ca,P=lift?(f,sd,up)=>R.P(f,sd,up+lift):R.P,o=pose(kind,riding&&action==='walk'?'idle':action,frame,k),front=sa>-.25,ops=[];if(opts.hurt){o.lean-=.075;o.sway+=(ca>=0?-.035:.035);o.handR.up=Math.max(.36,o.handR.up-.06);}const lean=o.lean,sw=o.sway;
- const add=(z,fn)=>ops.push({z,fn});const hip=o.hip,neck=hip+.3,top=hip+.55,r=.112;
+ const add=(z,fn)=>ops.push({z,fn});const hip=o.hip,neck=hip+.3,top=hip+.55+(o.headBob||0),r=.112;
  if(mount)mountOps(c,R.P,add,mount,opts.mountColor,team,action,frame,s,sa,ca,opts.style);
- const T=(f,sd,up)=>P(f+lean*(up-.3)/0.6,sd+sw,up);
+ const T=(f,sd,up)=>P(f+lean*(up-.3)/0.6+(o.lunge||0),sd+sw,up);
  // legs
  if(riding)for(const side of[-1,1]){const near=side*ca>.15,hipP=T(0,side*.09,hip),knee=T(.17,side*.2,hip-.04),foot=T(.1,side*.21,hip-.36);if(opts.mount==='elephant'&&!near&&Math.abs(ca)>.15)continue;add(near?-.2:-1.6,()=>{seg(c,hipP,knee,k.pants,Math.max(2.6,s*.11));seg(c,knee,foot,k.pants,Math.max(2.3,s*.09));blob(c,foot,s*.05,s*.035,'#3a2a1c');});}
  else for(const side of[-1,1]){const ft=side<0?o.footL:o.footR,kneeF=ft.f*.5+.05,hipP=T(0,side*.085,hip),knee=T(kneeF,side*.095,hip*.5+ft.up*.5),foot=P(ft.f,side*.1,ft.up),legCol=kind==='militia'||kind==='worker'?k.skin:k.pants,z=-.1+foot.z*.05;
@@ -234,7 +241,7 @@ function drawElephant(c,dir,action,frame,team,s,opts={}){const {P,sa}=rig(dir,s*
  const skin=opts.mountColor||'#8d9a8b',dark=shadeHex(skin,.74),lite=shadeHex(skin,1.18),st=opts.style||null,armored=!!opts.armored;
  for(const [f,sd,ph] of[[.32,-.19,0],[.32,.19,.5],[-.36,-.19,.5],[-.36,.19,0]]){const sw=walk?Math.sin((t+ph)*TAU)*.12:0,top=P(f,sd,.55),foot=P(f+sw,sd,Math.max(0,Math.cos((t+ph)*TAU))*(walk?.05:0));add(foot.z,()=>{seg(c,top,foot,sd*sa>0||foot.z>0?skin:dark,Math.max(3,s*.2));blob(c,foot,s*.1,s*.05,lite);});}
  for(let i=0;i<5;i++){const f=-.45+i*.2,p=P(f,0,.72+Math.sin(i/4*Math.PI)*.05),r=.36-Math.abs(i-2)*.03;add(p.z,()=>{blob(c,p,s*r,s*r*.92,skin,dark);blob(c,{x:p.x-s*r*.25,y:p.y-s*r*.35},s*r*.45,s*r*.3,'rgba(220,226,210,.22)');});}
- const head=P(.62,0,.82+strike*.08);add(head.z+.01,()=>{for(const sd of[-1,1]){const e=P(.52,sd*.26,.84);fillPoly(c,hull([P(.56,sd*.12,1.02),P(.5,sd*.36,.98),P(.48,sd*.34,.66),P(.56,sd*.14,.66),e]),shadeHex(skin,sd*sa>0?.95:.78),dark,1);}
+ const head=P(.62,0,.82+strike*.08+(walk?Math.abs(Math.sin(t*TAU))*.05:0));add(head.z+.01,()=>{for(const sd of[-1,1]){const e=P(.52,sd*.26,.84);fillPoly(c,hull([P(.56,sd*.12,1.02),P(.5,sd*.36,.98),P(.48,sd*.34,.66),P(.56,sd*.14,.66),e]),shadeHex(skin,sd*sa>0?.95:.78),dark,1);}
   blob(c,head,s*.26,s*.27,lite,dark);const tr=[P(.8,0,.78),P(.92+strike*.15,0,.5+strike*.35),P(.95+strike*.2,0,.22+strike*.6),P(1.02+strike*.1,0,.1+strike*.7)];c.strokeStyle=skin;c.lineWidth=Math.max(3,s*.12);c.lineCap='round';c.beginPath();c.moveTo(tr[0].x,tr[0].y);c.bezierCurveTo(tr[1].x,tr[1].y,tr[2].x,tr[2].y,tr[3].x,tr[3].y);c.stroke();
   for(const sd of[-1,1])seg(c,P(.78,sd*.1,.66),P(1.0,sd*.12,.6+strike*.2),'#ece3c4',Math.max(1.6,s*.05));if(sa>-.3){const e=P(.74,sa>0?.14:-.14,.9);blob(c,e,s*.025,s*.025,'#202e28');}});
  // saddle cloth (team colour), howdah, mahout and spearman
