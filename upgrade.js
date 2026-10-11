@@ -148,20 +148,28 @@ function drawDust(){
 }
 
 /* ---------- 4. Bọc render: sương mù chiến tranh + vẽ thêm sau lớp gốc ----------
-   Quân địch ngoài tầm nhìn (8 ô) của ta bị tạm ẩn khỏi game.units khi vẽ,
-   nên cả bản đồ chính lẫn hiệu ứng đều không "thể hiện" chúng. */
-function withVisibleUnits(fn){
-  const us = game.units, hidden = [];
+   Quân/nhà địch ngoài tầm nhìn (6 ô) của ta bị tạm ẩn khỏi game.units /
+   game.buildings khi vẽ, nên cả bản đồ chính lẫn hiệu ứng đều không
+   "thể hiện" chúng. */
+function withVisibleEntities(fn){
+  const us = game.units, bs = game.buildings, hu = [], hb = [];
   for(let i=us.length-1; i>=0; i--){
     const u = us[i];
-    if(u.owner!==0 && u.hp>0 && !enemySeen(u)){ hidden.push([i,u]); us.splice(i,1); }
+    if(u.owner!==0 && u.hp>0 && !enemySeen(u)){ hu.push([i,u]); us.splice(i,1); }
+  }
+  for(let i=bs.length-1; i>=0; i--){
+    const b = bs[i];
+    if(b.owner!==0 && b.hp>0 && !enemySeen(b)){ hb.push([i,b]); bs.splice(i,1); }
   }
   try{ return fn(); }
-  finally{ for(let k=hidden.length-1; k>=0; k--) us.splice(hidden[k][0], 0, hidden[k][1]); }
+  finally{
+    for(let k=hu.length-1; k>=0; k--) us.splice(hu[k][0], 0, hu[k][1]);
+    for(let k=hb.length-1; k>=0; k--) bs.splice(hb[k][0], 0, hb[k][1]);
+  }
 }
 const _render = render;
 render = function(){
-withVisibleUnits(()=>{
+withVisibleEntities(()=>{
   // Tách hiệu ứng số sát thương ra để vòng vẽ gốc không vẽ nhầm thành vòng tròn
   const dmg = [];
   for(let i=game.effects.length-1; i>=0; i--){
@@ -221,7 +229,7 @@ withVisibleUnits(()=>{
 // Ẩn cả hiệu ứng bám theo quân địch (bụi hành quân, xác, đạn bay)
 if(typeof fx!=='undefined' && fx){
   const _fxUpdate = fx.update.bind(fx);
-  fx.update = function(g, dt){ withVisibleUnits(()=>_fxUpdate(g, dt)); };
+  fx.update = function(g, dt){ withVisibleEntities(()=>_fxUpdate(g, dt)); };
 }
 /* ---------- 5. Tiếng "tách" xác nhận lệnh kiểu AoE II ---------- */
 const _order = Loan12.Game.prototype.order;
