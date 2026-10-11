@@ -154,7 +154,7 @@ function shieldFace(c,T,sp,r2,k,s,tower){const pat=k.shieldPattern,col=pat?pat.c
  else if(p==='tiger'){for(const d of[-.5,0,.5])seg(c,Q(-.7,d-.2),Q(.6,d+.15),b,lw*1.3);blob(c,Q(0,.05),s*.015,s*.015,'#c8323a');}
  blob(c,Q(0,0),s*.018,s*.018,k.belt);}
 // Banner (cờ) — shape, colour, edge and emblem come from the faction style.
-function bannerFlag(c,P,base,height,fs,team,k,s,frame,action,big){const sd=-.06,f0=-.13,h0=base,h1=base+height,flut=Math.sin(frame*1.3+(action==='walk'?2:0))*.03,w=big?.36:.26;const st=fs||{shape:'square',color:team,edge:k.accent||'#e0c27a'};
+function bannerFlag(c,P,base,height,fs,team,k,s,frame,action,big){const sd=-.06,f0=-.13,h0=base,h1=base+height,atk=action==='attack'?1:0,flut=Math.sin(frame*(1.3+atk*2.4)+(action==='walk'?2:0))*(.035+atk*.06),w=big?.36:.26;const st=fs||{shape:'square',color:team,edge:k.accent||'#e0c27a'};
  seg(c,P(f0,sd,h0),P(f0,sd,h1+.04),'#5a4128',Math.max(1.3,s*.028));const top=h1,len=st.shape==='long'?.34:.22;let pts;
  if(st.shape==='swallow')pts=[P(f0,sd,top),P(f0-w,sd+flut,top),P(f0-w*.72,sd,top-len*.5),P(f0-w,sd-flut,top-len),P(f0,sd,top-len)];
  else if(st.shape==='triangle')pts=[P(f0,sd,top),P(f0-w*1.05,sd+flut,top-len*.45),P(f0,sd,top-len)];

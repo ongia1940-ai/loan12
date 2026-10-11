@@ -2,7 +2,7 @@
 'use strict';
 const {Game:BaseGame,U,B,BUILD,TECH,RESOURCE,W,H,dist}=api;
 const NODE_NAMES={wood:'Rừng gỗ',stone:'Mỏ đá',gold:'Mỏ vàng',iron:'Mỏ sắt',food:'Ruộng lương'};
-U.worker={name:'Dân Phu',cost:{food:40},hp:45,dmg:0,armor:0,arrow:0,range:0,speed:1.65,delay:1,tier:1,building:'house'};
+U.worker={name:'Dân Phu',cost:{food:40},hp:45,dmg:0,armor:0,arrow:0,range:0,speed:1.65,delay:1,tier:1,building:'hall'};
 B.storehouse={name:'Kho Tài Nguyên',hp:350};
 BUILD.storehouse={cost:{wood:80,stone:40},seconds:14,description:'Điểm nộp hàng gần mỏ. Dân phu phải mang hàng tới kho, nhà dân hoặc nhà chính mới tăng tài nguyên.'};
 BUILD.house.description='Tăng 8/12/16 dân số; tuyển Dân Phu, nhận hàng và phân công thợ ở gần tới rừng/mỏ. Không tự tạo tài nguyên.';

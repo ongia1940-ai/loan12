@@ -128,6 +128,17 @@ render = function(){
     mc.restore();
   }
 
+  // Công trình đang cháy/dở (dưới 50% HP): chấm cam nhấp nháy trên bản đồ nhỏ
+  const flick = .55 + .45*Math.sin(now/130);
+  mc.save();
+  for(const b of game.buildings){
+    if(b.hp<=0 || b.hp>=b.maxHP*.5) continue;
+    mc.globalAlpha = .45 + .55*flick;
+    mc.fillStyle = '#ff9a3c';
+    mc.beginPath(); mc.arc(b.x*sx, b.y*sy, 3, 0, TAU); mc.fill();
+  }
+  mc.restore();
+
   for(const e of dmg) game.effects.push(e);
 };
 /* ---------- 5. Tiếng "tách" xác nhận lệnh kiểu AoE II ---------- */
