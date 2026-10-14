@@ -7,7 +7,7 @@ const BUILD={
  barracks:{cost:{wood:120,stone:60},seconds:18,description:'Tuyển dân binh, kích binh, giáp sĩ và chiến tượng. Cấp cao huấn luyện quân mạnh hơn.'},
  range:{cost:{wood:150,stone:80,iron:30},seconds:22,description:'Tuyển nỏ và chế tạo máy bắn đá. Nghiên cứu đầu tên; cần thu phục Đường Lâm để mở nỏ.'},
  dock:{cost:{wood:150,stone:50},seconds:20,description:'Xây trên vùng nước gần bờ. Đóng tàu trinh sát, vận tải và chiến đấu.'},
- command:{cost:{wood:100,stone:60,gold:40},seconds:22,description:'Gọi và tái tuyển danh tướng. Tối đa 2 tướng sống/đang tuyển trên toàn phe.'},
+ command:{cost:{wood:100,stone:60,gold:40},seconds:22,description:'Gọi và tái tuyển danh tướng. Tối đa 4 tướng sống/đang tuyển trên toàn phe.'},
  carpenter:{cost:{wood:100,stone:50},seconds:16,description:'Nghiên cứu hậu cần và thành đá ong. Thu phục Đường Lâm để mở công nghệ đá ong.'},
  forge:{cost:{wood:130,stone:100,iron:40},seconds:24,description:'Nghiên cứu vũ khí và giáp cho toàn quân. Yêu cầu Đại Bản Doanh cấp II.'},
  farm:{cost:{wood:60,stone:20},seconds:12,description:'Ruộng lương hữu hạn. Dân Phu phải canh tác và mang lương về kho.'},
@@ -29,7 +29,7 @@ const XP=[0,100,250,450,700];
 function pop(kind){return U[kind].pop??(U[kind].hero?3:kind==='elephant'?4:['catapult','serpent','transport'].includes(kind)?3:kind==='raft'?0:1);}
 function setup(g){if(!g.tech)g.tech={};if(!g.heroRecords)g.heroRecords={};}
 Game.prototype.ready=function(b){return !!b&&b.hp>0&&!b.constructing;};
-Game.prototype.population=function(){const used=this.units.filter(u=>u.owner===0&&u.hp>0).reduce((n,u)=>n+pop(u.kind),0);const queued=this.buildings.filter(b=>b.owner===0&&b.hp>0).reduce((n,b)=>n+b.queue.reduce((p,k)=>p+pop(k),0),0);const cap=this.buildings.filter(b=>b.owner===0&&this.ready(b)).reduce((n,b)=>n+(b.kind==='hall'?20+(b.tier-1)*10:b.kind==='house'?10:0),0);return {used,queued,cap};};
+Game.prototype.population=function(){const used=this.units.filter(u=>u.owner===0&&u.hp>0).reduce((n,u)=>n+pop(u.kind),0);const queued=this.buildings.filter(b=>b.owner===0&&b.hp>0).reduce((n,b)=>n+b.queue.reduce((p,k)=>p+pop(k),0),0);const cap=this.buildings.filter(b=>b.owner===0&&this.ready(b)).reduce((n,b)=>n+(b.kind==='hall'?30+(b.tier-1)*15:b.kind==='house'?10:0),0);return {used,queued,cap};};
 Game.prototype.upgradeSpec=function(b){return {cost:b.tier===1?{wood:100,stone:100}:{wood:200,stone:220,gold:100,iron:60},seconds:b.tier===1?18:32};};
 Game.prototype.upgradeError=function(b){if(!b||b.hp<=0||b.owner!==0)return 'Không sở hữu công trình';if(b.constructing||b.job)return 'Công trình đang thi công/nghiên cứu';if(b.tier>=3)return 'Đã đạt cấp tối đa III';if(b.queue.length)return 'Hoàn tất hoặc hủy hàng chờ trước';if(b.kind!=='hall'&&(!this.hall()||this.hall().tier<=b.tier))return 'Cần Đại Bản Doanh cấp '+(b.tier+1);return this.canPay(this.upgradeSpec(b).cost)?'':'Thiếu tài nguyên';};
 Game.prototype.upgrade=function(b){const error=this.upgradeError(b);if(error){this.say(error);return false;}const spec=this.upgradeSpec(b);this.pay(spec.cost);b.job={type:'upgrade',cost:spec.cost,total:spec.seconds,elapsed:0};this.say('Khởi công nâng cấp '+B[b.kind].name);return true;};

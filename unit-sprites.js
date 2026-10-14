@@ -6,8 +6,9 @@ const TAU=Math.PI*2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),mixN=(a,b,t)=>a+(b-
 // Faction unique units are drawn from a base archetype (kept in sync with U[kind].art in warlords.js).
 const ARCH={divineCrossbow:'crossbow',reedBanner:'militia',lateriteBow:'crossbow',armoredElephant:'elephant',seaRaider:'skirmisher',halberdier:'pike',ironGuard:'guard',drillSpear:'pike',longbow:'archer',greatsword:'swordsman',peasantLevy:'militia',escortGuard:'skirmisher',tigerGuard:'swordsman'};
 const archOf=k=>ARCH[k]||k,isElephant=k=>archOf(k)==='elephant';
+const HERO_KINDS=new Set(['dinh','tran','lehoan','nguyenbac']),isHero=k=>HERO_KINDS.has(k);
 const MILITARY=new Set(['militia','pike','guard','crossbow','archer','swordsman','skirmisher']);
-const INFANTRY=['worker','scholar','militia','pike','guard','crossbow','archer','swordsman','skirmisher','dinh','tran',...Object.keys(ARCH).filter(k=>ARCH[k]!=='elephant')];
+const INFANTRY=['worker','scholar','militia','pike','guard','crossbow','archer','swordsman','skirmisher','dinh','tran','lehoan','nguyenbac',...Object.keys(ARCH).filter(k=>ARCH[k]!=='elephant')];
 const SPRITED=new Set([...INFANTRY,'elephant','armoredElephant']);
 // Extra sprite kinds (ships, siege engines) registered by other files: {draw(c,dir,action,frame,team,s,opts),cell(b),shadow,ring,head,stride,cargo}.
 const REG=new Map();function register(kind,spec){REG.set(kind,spec);SPRITED.add(kind);return spec;}
@@ -28,7 +29,7 @@ function visualState(u,g){let st=states.get(u);
  if(target&&((u.attackAnim||0)>0||(!u.moving&&Math.hypot(target.x-u.x,target.y-u.y)<7))){st.dir=facingFromWorld(target.x-u.x,target.y-u.y);st.ax=st.ay=0;}
  else{st.ax+=dx;st.ay+=dy;if(Math.hypot(st.ax,st.ay)>.05){st.dir=facingFromWorld(st.ax,st.ay);st.ax=st.ay=0;}}
  st.phase=(st.phase+d/(isElephant(u.kind)?1.3:(REG.get(u.kind)?.stride||.72)))%1;return st;}
-function poseOf(u,g,st){const hero=u.kind==='dinh'||u.kind==='tran',time=(g&&g.time)||0,id=u.id||0;
+function poseOf(u,g,st){const hero=isHero(u.kind),time=(g&&g.time)||0,id=u.id||0;
  if((u.attackAnim||0)>0){const t=clamp(1-u.attackAnim/.38,0,.999);return{action:'attack',frame:Math.floor(t*FRAMES.attack)};}
  if(hero&&(u.gestureAnim||0)>0)return{action:'cmd',frame:Math.floor(time*7)%FRAMES.cmd};
  if((u.repairing||u.fishing&&u.fishing.phase==='fish')&&!u.moving)return{action:'work',frame:Math.floor(((time*1.6+id*.13)%1)*FRAMES.work)};
@@ -59,10 +60,14 @@ function kit(kind,team,look,variant,style,gen){const uk=kind;kind=archOf(kind);c
   case'archer':Object.assign(k,{tunic:'#7f6a44',hat:'scarf',weapon:'bow',quiver:true});break;
   case'swordsman':Object.assign(k,{tunic:'#6a573a',hat:'rattan',hatColor:'#9e8350',weapon:'saber',armor:['#c09a5c','#6b5636']});break;
   case'skirmisher':Object.assign(k,{tunic:'#8a7550',hat:'scarf',weapon:'javelin',shield:'buckler'});break;
-  case'dinh':case'tran':{const L=look||{},G=gen||{},S=style||{};Object.assign(k,{scale:1.25,skin:L.skin||'#d9a477',tunic:L.coat||team,pants:shadeHex(L.secondary||'#536a6b',.75),hem:.12,hat:'hero:'+(G.headgear||L.hat||'helmet'),hatColor:L.accent||'#d8c07a',hatSecond:L.secondary||'#536a6b',weapon:'hero:'+(G.weapon||L.weapon||'sword'),armor:S.armor?[L.accent||S.armor[0],S.armor[1]]:[L.accent||'#d8c07a',L.secondary||'#536a6b'],cape:(S.banner&&S.banner.color)||L.secondary||'#536a6b',banner:true,beard:G.beard||L.beard||null,hair:G.hair||'topknot',emblem:L.emblem||'將',accent:L.accent||'#d8c07a',hero:true,flagStyle:S.banner||null,shield:G.shieldBearer?'round':null,shieldPattern:G.shieldBearer&&S.shield?S.shield:null,pauldrons:true});break;}
+  case'dinh':case'tran':case'lehoan':case'nguyenbac':{const L=look||{},G=gen||{},S=style||{};Object.assign(k,{scale:1.25,skin:L.skin||'#d9a477',tunic:L.coat||team,pants:shadeHex(L.secondary||'#536a6b',.75),hem:.12,hat:'hero:'+(G.headgear||L.hat||'helmet'),hatColor:L.accent||'#d8c07a',hatSecond:L.secondary||'#536a6b',weapon:'hero:'+(G.weapon||L.weapon||'sword'),armor:S.armor?[L.accent||S.armor[0],S.armor[1]]:[L.accent||'#d8c07a',L.secondary||'#536a6b'],cape:(S.banner&&S.banner.color)||L.secondary||'#536a6b',banner:true,beard:G.beard||L.beard||null,hair:G.hair||'topknot',emblem:L.emblem||'將',accent:L.accent||'#d8c07a',hero:true,flagStyle:S.banner||null,shield:G.shieldBearer?'round':null,shieldPattern:G.shieldBearer&&S.shield?S.shield:null,pauldrons:true});
+   if(uk==='lehoan'){k.hat='hero:redPlume';k.hatColor='#c8323a';k.weapon='hero:greatsaber';k.emblem='\u4ee4';}
+   if(uk==='nguyenbac'){k.hat='hero:conical';k.hatColor='#d8c07a';k.weapon='hero:bow';k.quiver=true;k.emblem='\u5317';}
+   break;}
  }
  // faction uniform: tunic/pants palette, headgear, armour plates, shield pattern
  if(style&&MILITARY.has(kind)){k.style=style;k.tunic=style.tunic;k.pants=style.pants;k.hat='f:'+style.helm;k.hatColor=style.helmColor;if(k.armor||kind==='pike'||kind==='crossbow')k.armor=style.armor.slice();if(k.shield)k.shieldPattern=style.shield;k.flagStyle=style.banner;}
+ if(MILITARY.has(kind)&&!k.hero){const _v=[.92,1,1.08][variant%3]||1;if(typeof k.tunic==='string'&&k.tunic.startsWith('#'))k.tunic=shadeHex(k.tunic,_v);}
  if(ARCH[uk]){k.unique=true;k.scale=1.06;k.flag=true;k.pauldrons=true;const S=style||{armor:['#c9b273','#4a4a3a']};
   switch(uk){
    case'divineCrossbow':k.scale=1.14;k.weapon='divineCrossbow';k.armor=S.armor.slice();k.hat='f:fullHelm';k.hatColor=S.armor[0];k.cape=S.banner?.color||k.pants;k.quiver=true;break;
@@ -258,7 +263,7 @@ function drawElephant(c,dir,action,frame,team,s,opts={}){const {P,sa}=rig(dir,s*
  if(opts.hurt){c.save();c.globalCompositeOperation='source-atop';c.fillStyle='rgba(255,120,90,.2)';c.fillRect(-s*2,-s*2.8,s*4,s*3.2);c.restore();}
  return ops.length;}
 function drawFigure(c,kind,dir,action,frame,team,s,opts={}){const RS=REG.get(kind);if(RS)return RS.draw(c,dir,action,frame,team,s,opts)||1;if(isElephant(kind))return drawElephant(c,dir,action,frame,team,kind==='armoredElephant'?s*1.08:s,kind==='armoredElephant'?{...opts,armored:true}:opts);
- if(opts.mount==='elephant'&&(kind==='dinh'||kind==='tran')){const es=s*1.3,n=drawElephant(c,dir,action,frame,team,es,{style:opts.style,noRider:true,mountColor:opts.mountColor,hurt:opts.hurt});const sr=s*1.3,rs=sr*1.375;return n+drawInfantry(c,kind,dir,action,frame,team,sr,{...opts,lift:1.12*es*1.08/rs-.44,hurt:false});}
+ if(opts.mount==='elephant'&&isHero(kind)){const es=s*1.3,n=drawElephant(c,dir,action,frame,team,es,{style:opts.style,noRider:true,mountColor:opts.mountColor,hurt:opts.hurt});const sr=s*1.3,rs=sr*1.375;return n+drawInfantry(c,kind,dir,action,frame,team,sr,{...opts,lift:1.12*es*1.08/rs-.44,hurt:false});}
  return drawInfantry(c,kind,dir,action,frame,team,s,opts);}
 // ---------- atlas ----------
 const bucketOf=px=>Math.max(8,Math.round(2**(Math.round(Math.log2(Math.max(8,px))*4)/4)));
@@ -280,7 +285,7 @@ function createAtlas(opts={}){const page=opts.pageSize||1024,maxPages=opts.maxPa
   e={page:r.page,x:r.x,y:r.y,w:cw,h:ch,ox:cs.ox-x0,oy:cs.oy-y0,b,pageRef:pg};map.set(key,e);stats.baked++;return e;}
  return{pageSize:page,get,has:k=>map.has(k),peek:k=>map.get(k),pages,stats,size:()=>map.size,reset};}
 function spriteKey(kind,dir,action,frame,team,b,opts={}){return[kind,dir,action,frame,team,b,opts.rank||1,opts.variant||0,opts.toolKind||'',opts.load||'',opts.hurt?1:0,opts.lookKey||'',opts.style?opts.style.id:'',opts.flag?1:0,opts.mount||''].join('|');}
-function cellKind(kind,opts={}){return opts.mount==='elephant'?'mountedElephant':opts.mount?'mounted':kind==='dinh'||kind==='tran'?'hero':kind;}
+function cellKind(kind,opts={}){return opts.mount==='elephant'?'mountedElephant':opts.mount?'mounted':isHero(kind)?'hero':kind;}
 // ---------- per-frame drawing ----------
 function groundRing(S,x,y,rx,ry,n=18){return Array.from({length:n},(_,i)=>{const t=i/n*TAU;return S({x:x+Math.cos(t)*rx,y:y+Math.sin(t)*ry});});}
 function createRenderer(opts={}){const make=opts.makeCanvas||((w,h)=>{if(typeof OffscreenCanvas!=='undefined')return new OffscreenCanvas(w,h);const c=document.createElement('canvas');c.width=w;c.height=h;return c;});
@@ -288,12 +293,12 @@ function createRenderer(opts={}){const make=opts.makeCanvas||((w,h)=>{if(typeof 
  function beginFrame(){frameStart=now();bakedMs=0;stats={live:0,cached:0,baked:0};}
  function factionOf(u,g){try{if(u.kind==='tran'){const F=(g&&g.FACTIONS)||(typeof globalThis!=='undefined'&&globalThis.Loan12&&globalThis.Loan12.FACTIONS);const f3=F&&F.find(f=>f.id===3);if(f3)return f3;}return g&&typeof g.faction==='function'?g.faction(u.owner)||null:null;}catch(e){return null;}}
  function lookOf(u,g){if(u.kind!=='dinh'&&u.kind!=='tran')return null;return factionOf(u,g)?.visual||null;}
- function identity(u,g){const f=factionOf(u,g),hero=u.kind==='dinh'||u.kind==='tran',arch=archOf(u.kind);if(REG.has(u.kind))return{style:f&&f.style||null,general:null,flag:false,mount:null,mountColor:null};return{style:f&&f.style&&(MILITARY.has(arch)||hero||isElephant(u.kind))?f.style:null,general:hero&&f?f.general||null:null,flag:!!(f&&f.style&&MILITARY.has(arch)&&(ARCH[u.kind]||(u.id||0)%5===0)),mount:hero&&f&&f.general?f.general.mount||null:null,mountColor:hero&&f&&f.general?f.general.mountColor:null};}
+ function identity(u,g){const f=factionOf(u,g),hero=isHero(u.kind),arch=archOf(u.kind);if(REG.has(u.kind))return{style:f&&f.style||null,general:null,flag:false,mount:null,mountColor:null};return{style:f&&f.style&&(MILITARY.has(arch)||hero||isElephant(u.kind))?f.style:null,general:hero&&f?f.general||null:null,flag:!!(f&&f.style&&MILITARY.has(arch)&&(ARCH[u.kind]||(u.id||0)%5===0)),mount:hero&&f&&f.general?f.general.mount||null:null,mountColor:hero&&f&&f.general?f.general.mountColor:null};}
  function shadow(c,u,g,ground,s,dir,mount){const RS=REG.get(u.kind);if(RS&&RS.shadow===false)return;if(RS&&RS.shadow){c.fillStyle='rgba(16,26,14,.12)';fillPoly(c,groundRing(ground,u.x+.14,u.y-.14,RS.shadow*1.45,RS.shadow*1.1,18));c.fillStyle='rgba(12,20,12,.3)';fillPoly(c,groundRing(ground,u.x+.07,u.y-.07,RS.shadow*1.02,RS.shadow*.76,14));return;}const big=isElephant(u.kind)||mount==='elephant',r=big?.62:mount?.42:.24;c.fillStyle='rgba(18,25,15,.12)';fillPoly(c,groundRing(ground,u.x+.16,u.y-.16,r*(big?1.55:1.46),r*(big?1.08:1.2),18));c.fillStyle='rgba(10,18,11,.32)';fillPoly(c,groundRing(ground,u.x+.06,u.y-.06,r*(big?1.12:1.02),r*(big?.72:.82),14));}
  function selection(c,u,ground,front,color,mount){const big=isElephant(u.kind)||mount==='elephant',r=REG.get(u.kind)?.ring||(big?.8:mount?.5:.33),pts=groundRing(ground,u.x,u.y,r,r,28),cy=ground({x:u.x,y:u.y}).y;c.save();c.lineWidth=front?2:1.4;c.strokeStyle=color;c.globalAlpha=front?1:.55;c.lineCap='round';c.beginPath();let on=false;for(let i=0;i<=pts.length;i++){const p=pts[i%pts.length],keep=front?p.y>=cy:p.y<cy;if(keep){if(!on){c.moveTo(p.x,p.y);on=true;}else c.lineTo(p.x,p.y);}else on=false;}c.stroke();c.restore();}
  // Returns true when handled (sprited unit); false lets the caller fall back to iso-art.
  function drawUnit(c,u,g,S,s,selected,color,o={}){if(!SPRITED.has(u.kind))return false;const ground=o.ground||S,dpr=o.dpr||1,budget=o.budgetMs??6;const st=visualState(u,g),ps=poseOf(u,g,st),flip=MIRROR[st.dir]>=0,dir=flip?MIRROR[st.dir]:st.dir,p=S(u);
-  const look=lookOf(u,g),fo={rank:u.rank||1,variant:u.kind==='worker'?(u.id||0)%3:u.kind==='fishingBoat'?(u.load?.amount>0?1:0):REG.get(u.kind)?.cargo?Math.min(REG.get(u.kind).cargo,(u.cargo||[]).length):0,toolKind:u.kind==='worker'?(u.work?.kind||u.load?.kind||'food'):'',load:u.kind==='worker'&&u.load?.amount>0?u.load.kind:'',hurt:(u.hurtAnim||0)>0,look,lookKey:look?[look.coat,look.secondary,look.accent,look.hat,look.weapon,look.beard,look.emblem,look.skin].join(','):'',...identity(u,g)};if(u.kind==='elephant')fo.style=null;const ck=cellKind(u.kind,fo);
+  const look=lookOf(u,g),fo={rank:u.rank||1,variant:u.kind==='fishingBoat'?(u.load?.amount>0?1:0):REG.get(u.kind)?.cargo?Math.min(REG.get(u.kind).cargo,(u.cargo||[]).length):(u.id||0)%3,toolKind:u.kind==='worker'?(u.work?.kind||u.load?.kind||'food'):'',load:u.kind==='worker'&&u.load?.amount>0?u.load.kind:'',hurt:(u.hurtAnim||0)>0,look,lookKey:look?[look.coat,look.secondary,look.accent,look.hat,look.weapon,look.beard,look.emblem,look.skin].join(','):'',...identity(u,g)};if(u.kind==='elephant')fo.style=null;const ck=cellKind(u.kind,fo);
   shadow(c,u,g,ground,s,dir,fo.mount);if(selected)selection(c,u,ground,false,u.hold?'#9ed8e7':'#f0eab0',fo.mount);
   if(u.kind==='scholar'&&u.healing&&g.units){const pt=g.units.find(v=>v.id===u.healing&&v.hp>0);if(pt){const q=S(pt);c.save();c.setLineDash([3,6]);seg(c,{x:p.x,y:p.y-s*.45},{x:q.x,y:q.y-s*.4},'#d3e7ae99',1.5);c.restore();}}
   const b=o.settled===false?bucketOf(s*dpr):Math.max(8,Math.round(s*dpr)),key=spriteKey(u.kind,dir,ps.action,ps.frame,color,b,fo);let e=atlas.peek(key);if(!e&&o.settled===false){for(const bb of[bucketOf(s*dpr*.84),bucketOf(s*dpr*1.19)]){e=atlas.peek(spriteKey(u.kind,dir,ps.action,ps.frame,color,bb,fo));if(e)break;}}
@@ -302,11 +307,11 @@ function createRenderer(opts={}){const make=opts.makeCanvas||((w,h)=>{if(typeof 
   if(e){const k=s/e.b;if(flip){c.save();c.translate(Math.round(p.x),Math.round(p.y));c.scale(-1,1);c.drawImage(e.pageRef.canvas,e.x,e.y,e.w,e.h,-e.ox*k,-e.oy*k,e.w*k,e.h*k);c.restore();}else if(dpr===1&&Math.abs(k-1)<.02)c.drawImage(e.pageRef.canvas,e.x,e.y,e.w,e.h,Math.round(p.x-e.ox),Math.round(p.y-e.oy),e.w,e.h);else c.drawImage(e.pageRef.canvas,e.x,e.y,e.w,e.h,p.x-e.ox*k,p.y-e.oy*k,e.w*k,e.h*k);stats.cached++;}
   else{c.save();c.translate(p.x,p.y);if(flip)c.scale(-1,1);drawFigure(c,u.kind,dir,ps.action,ps.frame,color,s,fo);c.restore();stats.live++;}
   if(selected)selection(c,u,ground,true,u.hold?'#9ed8e7':'#f0eab0',fo.mount);
-  if(u.kind==='dinh'||u.kind==='tran'){if((u.gestureAnim||0)>0){const pulse=.55+.45*Math.sin(((g&&g.time)||0)*14);c.strokeStyle=`rgba(242,212,135,${pulse.toFixed(3)})`;c.lineWidth=1.6;for(let i=0;i<5;i++){const a=-Math.PI*.9+i*Math.PI*.2;seg(c,{x:p.x+Math.cos(a)*s*.48,y:p.y-s*.86+Math.sin(a)*s*.48},{x:p.x+Math.cos(a)*s*.68,y:p.y-s*.86+Math.sin(a)*s*.68},c.strokeStyle,1.6);}}}
+  if(isHero(u.kind)){if((u.gestureAnim||0)>0){const pulse=.55+.45*Math.sin(((g&&g.time)||0)*14);c.strokeStyle=`rgba(242,212,135,${pulse.toFixed(3)})`;c.lineWidth=1.6;for(let i=0;i<5;i++){const a=-Math.PI*.9+i*Math.PI*.2;seg(c,{x:p.x+Math.cos(a)*s*.48,y:p.y-s*.86+Math.sin(a)*s*.48},{x:p.x+Math.cos(a)*s*.68,y:p.y-s*.86+Math.sin(a)*s*.68},c.strokeStyle,1.6);}}}
   return true;}
  // Compact health bar: player units green→amber→red, others red.
  function healthBar(c,x,y,w,ratio,own){ratio=clamp(ratio,0,1);const h=Math.max(3,Math.round(w/11));c.fillStyle='rgba(12,18,12,.8)';c.fillRect(Math.round(x-w/2)-1,Math.round(y)-1,Math.round(w)+2,h+2);c.fillStyle=own?(ratio>.6?'#9fd36b':ratio>.3?'#e2c25a':'#e0674e'):'#e0674e';c.fillRect(Math.round(x-w/2),Math.round(y),Math.round(w*ratio),h);c.fillStyle='rgba(255,255,255,.25)';c.fillRect(Math.round(x-w/2),Math.round(y),Math.round(w*ratio),1);}
- function headHeight(u,g){const RS=REG.get(u.kind);if(RS&&RS.head)return RS.head;if(isElephant(u.kind))return u.kind==='armoredElephant'?2.7:2.5;if(u.kind==='dinh'||u.kind==='tran'){const m=g?identity(u,g).mount:null;return m==='elephant'?3.6:m?2.05:1.6;}return 1.25;}
+ function headHeight(u,g){const RS=REG.get(u.kind);if(RS&&RS.head)return RS.head;if(isElephant(u.kind))return u.kind==='armoredElephant'?2.7:2.5;if(isHero(u.kind)){const m=g?identity(u,g).mount:null;return m==='elephant'?3.6:m?2.05:1.6;}return 1.25;}
  return{drawUnit,beginFrame,healthBar,headHeight,identity,atlas,stats:()=>stats};}
 return{REG,register,hull,fillPoly,seg,blob,ring,shadeHex,ARCH,archOf,MILITARY,factionHelm,shieldFace,bannerFlag,cellKind,MIRROR,INFANTRY,SPRITED,FRAMES,DIRS,octant,facingFromWorld,visualState,poseOf,rig,kit,drawFigure,drawInfantry,drawElephant,bucketOf,cellSize,createAtlas,spriteKey,createRenderer};
 });

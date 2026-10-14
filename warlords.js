@@ -86,7 +86,7 @@ const ELEPHANTS=['elephant','armoredElephant'];
 class Game extends Base{
  fid(owner){return this.faction(owner)?.id??owner;}
  unitName(u){if(!u)return'';if(u.kind==='dinh')return this.faction(u.owner).name;return U[u.kind]?.name||u.kind;}
- abilityInfo(u){if(!u)return null;if(u.kind==='dinh')return ABILITIES[this.fid(u.owner)];if(u.kind==='tran')return{name:'Lệnh Tháo Cọc',cooldown:90,text:'Thả bè hỏa công vào thuyền địch.'};return null;}
+ abilityInfo(u){if(!u)return null;if(u.kind==='dinh')return ABILITIES[this.fid(u.owner)];if(u.kind==='tran')return{name:'Lệnh Tháo Cọc',cooldown:90,text:'Thả bè hỏa công vào thuyền địch.'};if(u.kind==='lehoan')return{name:'Trống Xung Trận',cooldown:60,text:'Quân bộ quanh Lê Hoàn +35% tốc độ trong 8s, giải khống chế.'};if(u.kind==='nguyenbac')return{name:'Mưa Tên Phủ Đầu',cooldown:75,text:'Bắn một loạt tên gây 30 sát thương lên mọi địch trong 5 ô.'};return null;}
  activeBuffs(u){if(!u.buffs||!u.buffs.length)return [];u.buffs=u.buffs.filter(b=>b.until>this.time);return u.buffs;}
  buff(owner,center,radius,filter,buff,duration){let n=0;for(const v of this.units){if(v.owner!==owner||v.hp<=0||v.embarked||dist(v,center)>radius||!filter(v))continue;(v.buffs=this.activeBuffs(v)).push({...buff,until:this.time+duration});n++;}return n;}
  stats(u){const s=super.stats(u);if(!this.factionSlots)return s;const f=this.fid(u.owner),t=this.tile(u.x,u.y),land=!s.naval;

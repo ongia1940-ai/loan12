@@ -9,7 +9,7 @@ Object.assign(U,{
  ramBoat:{name:'Thuyền Húc Mũi Sắt',cost:{wood:90,iron:30},hp:260,dmg:20,armor:3,arrow:2,range:1,speed:1.7,delay:2.2,tier:2,building:'dock',naval:true,pop:3,ram:true},
  flagship:{name:'Soái Hạm Rồng',cost:{wood:260,gold:120,iron:90},hp:700,dmg:15,shots:2,armor:5,arrow:7,range:7.5,speed:1,delay:2.6,tier:3,building:'dock',naval:true,splash:.6,pop:6,command:true}
 });
-const SHIP_INFO={scout:'Trinh sát nhanh, không đánh.',fishingBoat:'Đánh cá ở bãi cá (vùng nước có cá), chở 30 Lương về Thủy Xưởng.',transport:'Chở 6 bộ binh. Chọn quân rồi chuột phải lên thuyền để lên; chọn thuyền rồi chuột phải lên bờ để đổ quân.',archerBoat:'Nhanh, bắn 2 tên tầm 5,5; giỏi quấy rối thuyền nhỏ và quân trên bờ.',ramBoat:'Mũi sắt húc thuyền địch ×2,2 sát thương; phá tường ven sông ×3.',serpent:'Chiến thuyền tầm xa cân bằng.',fireboat:'Ném hũ lửa đánh lan.',warbarge:'Chở 10 quân, giáp dày.',towerShip:'Lâu thuyền nhiều tầng, tầm 8,5.',flagship:'Soái hạm: thuyền mình trong 7 ô +15% sát thương.'};
+const SHIP_INFO={scout:'Trinh sát nhanh, không đánh.',fishingBoat:'Đánh cá ở bãi cá (vùng nước có cá), chở 30 Lương về Thủy Xưởng. Có thể thả đùm nuôi cá ở vùng nước chỉ định.',transport:'Chở 6 bộ binh. Chọn quân rồi chuột phải lên thuyền để lên; chọn thuyền rồi chuột phải lên bờ để đổ quân.',archerBoat:'Nhanh, bắn 2 tên tầm 5,5; giỏi quấy rối thuyền nhỏ và quân trên bờ.',ramBoat:'Mũi sắt húc thuyền địch ×2,2 sát thương; phá tường ven sông ×3.',serpent:'Chiến thuyền tầm xa cân bằng.',fireboat:'Ném hũ lửa đánh lan.',warbarge:'Chở 10 quân, giáp dày.',towerShip:'Lâu thuyền nhiều tầng, tầm 8,5.',flagship:'Soái hạm: thuyền mình trong 7 ô +15% sát thương.'};
 const NAVAL_FISH=450;
 class Game extends Base{
  constructor(...args){super(...args);this.spawnFish();}
@@ -63,7 +63,21 @@ class Game extends Base{
    const home=dock||h,foe=[...this.units.filter(v=>v.hp>0&&!v.embarked&&v.owner===0&&U[v.kind].naval),...this.buildings.filter(b=>b.hp>0&&b.owner===0&&b.kind==='dock')].filter(v=>dist(v,home)<24).sort((x,y)=>dist(s,x)-dist(s,y))[0];
    if(foe){s.target=foe.id;s.repath=0;s.path=[];}else if(t){s.target=null;s.path=[];}}}
  aiThink(owner){super.aiThink(owner);this.aiNavy(owner);}
- tick(dt){if(this.paused||this.pending!==null||this.result)return;super.tick(dt);if(this.pending!==null||this.result)return;const d=Math.min(dt,.15);this.fishTick(d);this.navalTick(d);}
+ // Thả đùm nuôi cá: thuyền chài đặt đùm ở vùng nước chỉ định (tốn 60 Gỗ),
+ // cá trong đùm tự sinh sôi tới 800; thuyền tự ra đánh như bãi cá thường.
+ deployTrap(ids,point){const boats=this.units.filter(u=>ids.includes(u.id)&&u.hp>0&&u.owner===0&&U[u.kind].fisher);
+  if(!boats.length){this.say('Chọn Thuyền Chài trước.');return false;}
+  const x=Math.floor(point.x),y=Math.floor(point.y),t=this.tile(x,y);
+  if(t!==3&&t!==4){this.say('Đùm phải thả ở vùng nước.');return false;}
+  if(this.blocked(x,y,'fishingBoat')){this.say('Vùng nước này bị chắn.');return false;}
+  const mine=(this.nodes||[]).filter(n=>n.fishFarm&&n.lord===0);
+  if(mine.length>=5){this.say('Tối đa 5 đùm cá.');return false;}
+  if(mine.some(n=>Math.hypot(n.x-point.x,n.y-point.y)<5)){this.say('Đã có đùm ở gần đây.');return false;}
+  if(!this.pay({wood:60})){this.say('Cần 60 Gỗ để đan đùm.');return false;}
+  const n={id:this.nextId++,entity:'resource',kind:'food',fish:true,fishFarm:true,x:x+.5,y:y+.5,amount:150,maxAmount:800,lord:0};
+  this.nodes.push(n);this._occDirty=true;this.say('Đã thả đùm nuôi cá · cá sẽ tự sinh sôi');
+  this.fish(boats.map(b=>b.id),n.id);return true;}
+ tick(dt){if(this.paused||this.pending!==null||this.result)return;super.tick(dt);if(this.pending!==null||this.result)return;const d=Math.min(dt,.15);for(const n of this.nodes||[])if(n.fishFarm&&n.amount<n.maxAmount)n.amount=Math.min(n.maxAmount,n.amount+1.5*d);this.fishTick(d);this.navalTick(d);}
 }
 Object.assign(api,{Game,SHIP_INFO});return api;
 });
