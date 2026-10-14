@@ -31,8 +31,11 @@ class Game extends EconomyGame {
   // Defensive and support buildings participate in the battle instead of being cosmetic props.
   for(const b of this.buildings)if(b.hp>0&&!b.constructing&&!b.job){
    if(b.kind==='watchtower'){
-    b.cooldown=Math.max(0,(b.cooldown||0)-dt);const range=8+(b.tier-1)*.6,target=this.units.filter(u=>u.hp>0&&!u.embarked&&this.hostile(b,u)&&dist(b,u)<=range&&this.line(b,u)).sort((a,z)=>dist(b,a)-dist(b,z))[0];
-    if(target&&b.cooldown<=0){const damage=10+b.tier*4;this.hit(target,damage,b);b.cooldown=Math.max(.85,1.85-(b.tier-1)*.25);this.effects.push({type:'shot',x:b.x,y:b.y-.35,tx:target.x,ty:target.y,life:.3,max:.3,src:'watchtower'});}
+    b.cooldown=Math.max(0,(b.cooldown||0)-dt);const range=8+(b.tier-1)*.6;
+    if(b.cooldown<=0){const damage=10+b.tier*4,shots=b.tier>=3?4:b.tier;
+     const targets=this.units.filter(u=>u.hp>0&&!u.embarked&&this.hostile(b,u)&&dist(b,u)<=range&&this.line(b,u)).sort((a,z)=>dist(b,a)-dist(b,z)).slice(0,shots);
+     if(targets.length){for(const t of targets){this.hit(t,damage,b);this.effects.push({type:'shot',x:b.x,y:b.y-.35,tx:t.x,ty:t.y,life:.3,max:.3,src:'watchtower'});}b.cooldown=Math.max(.85,1.85-(b.tier-1)*.25);}
+    }
    }
    if(b.kind==='well'){
     const rate=.5+b.tier*.5,patients=this.units.filter(u=>u.hp>0&&!u.embarked&&u.owner===b.owner&&!U[u.kind].naval&&u.kind!=='catapult'&&u.hp<u.maxHP&&this.time-u.lastHit>5&&dist(b,u)<=4).sort((a,z)=>a.hp/a.maxHP-z.hp/z.maxHP).slice(0,3);

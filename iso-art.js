@@ -101,8 +101,37 @@ function building(c,b,g,S,s,selected,faction){const p=S(b),unit=s*.9,thatch=b.ti
  if(!b.constructing&&b.hp<b.maxHP*.5&&g.visualDetail!==false){line(c,{x:p.x-s*.3,y:p.y-s*.35},{x:p.x-s*.18,y:p.y-s*.15},'#3b3c2e',1.5);line(c,{x:p.x-s*.18,y:p.y-s*.15},{x:p.x-s*.28,y:p.y},'#3b3c2e',1.5);for(let i=0;i<3;i++)ellipse(c,p.x+s*(.2+i*.08)+Math.sin(g.time+i)*3,p.y-s*(1+i*.22),s*(.09+i*.025),s*.09,'#655e5266');}
  if(b.kind!=='well'){const flag=S({x:b.x+.9,y:b.y-.7});line(c,flag,{x:flag.x,y:flag.y-s*1.7},'#675638',2);polygon(c,[{x:flag.x,y:flag.y-s*1.7},{x:flag.x+s*.5,y:flag.y-s*1.57+Math.sin(g.time*3)*2},{x:flag.x,y:flag.y-s*1.3}],faction);}
 }
-function baseTree(c,n,g,S,s){const p=S(n);if(n.amount<=0){ellipse(c,p.x,p.y,s*.15,s*.08,'#816141');return;}ellipse(c,p.x+s*.24,p.y+s*.08,s*.5,s*.22,'#29432633');line(c,p,{x:p.x,y:p.y-s*.85},'#604c30',s*.12);const seed=n.id%5;for(const [dx,dy,r,color] of [[.14,-.65,.38,'#2c5339'],[-.19,-.87,.36,'#3f6840'],[.14,-1.05,.32,'#527c45'],[-.12,-1.18,.24,'#6a904c']])ellipse(c,p.x+dx*s,p.y+dy*s,s*r,s*r*.77,color);line(c,{x:p.x,y:p.y-s*.2},{x:p.x-s*.16,y:p.y-s*.7},'#66513a',2);}
-function baseRock(c,n,g,S,s){const p=S(n),base=n.amount>0?{stone:'#acb0a0',gold:'#b3a77b',iron:'#84999d'}[n.kind]:'#6d7560';ellipse(c,p.x+s*.15,p.y+s*.05,s*.62,s*.2,'#33422d33');polygon(c,[{x:p.x-s*.6,y:p.y},{x:p.x-s*.28,y:p.y-s*.48},{x:p.x+s*.15,y:p.y-s*.67},{x:p.x+s*.65,y:p.y-s*.14},{x:p.x+s*.36,y:p.y+s*.2}],base,'#465344');polygon(c,[{x:p.x+s*.15,y:p.y-s*.67},{x:p.x+s*.05,y:p.y-s*.1},{x:p.x+s*.36,y:p.y+s*.2},{x:p.x+s*.65,y:p.y-s*.14}],'#50645e77');if(n.amount>0)for(let i=0;i<4;i++)ellipse(c,p.x+s*(-.3+i*.2),p.y-s*(.12+(i%2)*.15),s*.06,s*.09,n.kind==='gold'?'#edcb64':n.kind==='iron'?'#bdcbd0':'#e0dfc8');}
+function baseTree(c,n,g,S,s){const p=S(n);if(n.amount<=0){ellipse(c,p.x,p.y,s*.15,s*.08,'#816141');line(c,p,{x:p.x,y:p.y-s*.4},'#604c30',s*.1);return;}
+ const v=n.id%3;
+ ellipse(c,p.x+s*.24,p.y+s*.08,s*.5,s*.22,'#29432633');
+ line(c,p,{x:p.x,y:p.y-s*.85},'#604c30',s*.12);
+ line(c,{x:p.x,y:p.y-s*.2},{x:p.x-s*.16,y:p.y-s*.7},'#66513a',2);
+ const pal=[['#2c5339','#3f6840','#527c45','#6a904c'],['#27502f','#3a6a3a','#4d8148','#79a35a'],['#2f5a4a','#41705c','#5a8a6a','#7fae7f']][v];
+ const blobs=v===2?[[-.2,-.7,.4],[.18,-.85,.36],[-.05,-1.05,.34],[.12,-1.25,.26],[-.14,-1.42,.2]]:v===1?[[-.16,-.68,.36],[.16,-.9,.34],[-.1,-1.12,.32],[.1,-1.32,.24],[0,-1.52,.17]]:[[.14,-.65,.38],[-.19,-.87,.36],[.14,-1.05,.32],[-.12,-1.18,.24],[.05,-1.34,.18]];
+ blobs.forEach((b,i)=>ellipse(c,p.x+b[0]*s,p.y+b[1]*s,s*b[2],s*b[2]*.77,pal[i%4]));
+ ellipse(c,p.x-s*.08,p.y-s*.95,s*.2,s*.13,pal[3]+'aa');
+ ellipse(c,p.x+s*.12,p.y-s*.5,s*.22,s*.14,'#1e3a2666');
+ line(c,{x:p.x+s*.02,y:p.y-s*.55},{x:p.x-s*.2,y:p.y-s*.85},'#5d4a30',s*.04);
+ line(c,{x:p.x-s*.02,y:p.y-s*.7},{x:p.x+s*.18,y:p.y-s*.95},'#5d4a30',s*.04);}
+function goldMine(c,n,g,S,s){const p=S(n);
+ ellipse(c,p.x,p.y+s*.08,s*.7,s*.24,'#33422d33');
+ polygon(c,[{x:p.x-s*.7,y:p.y},{x:p.x-s*.45,y:p.y-s*.55},{x:p.x+s*.45,y:p.y-s*.55},{x:p.x+s*.7,y:p.y}],'#8a7a5e','#5d5340');
+ polygon(c,[{x:p.x-s*.45,y:p.y-s*.55},{x:p.x-s*.2,y:p.y-s*.75},{x:p.x+s*.2,y:p.y-s*.75},{x:p.x+s*.45,y:p.y-s*.55}],'#9c8d6d','#5d534077');
+ const fw=s*.34,fh=s*.42;
+ line(c,{x:p.x-fw,y:p.y},{x:p.x-fw,y:p.y-fh},'#5d4426',s*.07);
+ line(c,{x:p.x+fw,y:p.y},{x:p.x+fw,y:p.y-fh},'#5d4426',s*.07);
+ line(c,{x:p.x-fw-s*.06,y:p.y-fh},{x:p.x+fw+s*.06,y:p.y-fh},'#6b4e2c',s*.08);
+ line(c,{x:p.x-fw,y:p.y-fh*.55},{x:p.x+fw,y:p.y-fh*.15},'#4e3a2055',s*.03);
+ ellipse(c,p.x,p.y-fh*.45,fw*.8,fh*.42,'#14100a');
+ ellipse(c,p.x-fw*.3,p.y-fh*.5,fw*.25,fh*.14,'#edcb6455');
+ for(let i=0;i<6;i++)ellipse(c,p.x+(noise(n.id,7,i)-.5)*s*1.2,p.y-s*(.1+noise(n.id,8,i)*.4),s*.045,s*.06,'#edcb64');}
+function baseRock(c,n,g,S,s){if(n.kind==='gold'&&n.amount>0){goldMine(c,n,g,S,s);return;}
+ const p=S(n),big=n.kind==='stone'&&n.amount>0?1.35:1,ss=s*big,base=n.amount>0?{stone:'#acb0a0',iron:'#84999d'}[n.kind]:'#6d7560';
+ ellipse(c,p.x+ss*.15,p.y+ss*.05,ss*.62,ss*.2,'#33422d33');
+ polygon(c,[{x:p.x-ss*.6,y:p.y},{x:p.x-ss*.28,y:p.y-ss*.48},{x:p.x+ss*.15,y:p.y-ss*.67},{x:p.x+ss*.65,y:p.y-ss*.14},{x:p.x+ss*.36,y:p.y+ss*.2}],base,'#465344');
+ polygon(c,[{x:p.x+ss*.15,y:p.y-ss*.67},{x:p.x+ss*.05,y:p.y-ss*.1},{x:p.x+ss*.36,y:p.y+ss*.2},{x:p.x+ss*.65,y:p.y-ss*.14}],'#50645e77');
+ if(n.amount>0){for(let i=0;i<4;i++)ellipse(c,p.x+ss*(-.3+i*.2),p.y-ss*(.12+(i%2)*.15),ss*.06,ss*.09,n.kind==='iron'?'#bdcbd0':'#e0dfc8');
+  if(n.kind==='stone')for(let i=0;i<3;i++){const qx=p.x+ss*(.05+i*.2);line(c,{x:qx,y:p.y-ss*.2},{x:qx+ss*.1,y:p.y+ss*.08},'#7d8474',ss*.05);}}}
 function tree(c,n,g,S,s){baseTree(c,n,g,S,s);if(n.amount<=0||g.visualDetail===false||s<18)return;const p=S(n),wind=Math.sin(g.time*1.5+n.id)*s*.018;for(let i=0;i<19;i++){const a=noise(n.id,4,i),b=noise(n.id,9,i),x=p.x+(a-.5)*s*.72+wind,y=p.y-s*(.62+b*.62);ellipse(c,x,y,s*(.065+a*.03),s*.043,i%3===0?'#9dab598a':i%3===1?'#294f3999':'#80a35199');}line(c,{x:p.x-s*.035,y:p.y},{x:p.x-s*.035,y:p.y-s*.45},'#a48c56',.8);for(let i=0;i<4;i++){const q=S({x:n.x+(noise(n.id,2,i)-.5)*.6,y:n.y+(noise(n.id,3,i)-.5)*.6});ellipse(c,q.x,q.y,s*.035,s*.018,'#a3a36677');}}
 function rock(c,n,g,S,s){baseRock(c,n,g,S,s);if(g.visualDetail===false||s<18)return;const p=S(n);for(let i=0;i<5;i++){const x=p.x+s*(noise(n.id,1,i)-.5),y=p.y-s*(.1+noise(n.id,2,i)*.28);line(c,{x,y},{x:x+s*.1,y:y+s*.06},'#354d495e',.8);line(c,{x:x+s*.1,y:y+s*.06},{x:x+s*.05,y:y+s*.13},'#354d495e',.8);}for(let i=0;i<7;i++){const a=noise(n.id,4,i),q={x:p.x+(a-.5)*s*1.35,y:p.y+s*(.08+noise(n.id,5,i)*.18)};polygon(c,[{x:q.x-s*.05,y:q.y},{x:q.x,y:q.y-s*.07},{x:q.x+s*.07,y:q.y+s*.01}],n.amount>0&&n.kind==='gold'?'#cabb78':'#a5af99','#596b5766');}}
 function historicalPerson(c,u,g,S,s,color){

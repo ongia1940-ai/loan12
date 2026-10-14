@@ -11,7 +11,7 @@ const BUILD={
  carpenter:{cost:{wood:100,stone:50},seconds:16,description:'Nghiên cứu hậu cần và thành đá ong. Thu phục Đường Lâm để mở công nghệ đá ong.'},
  forge:{cost:{wood:130,stone:100,iron:40},seconds:24,description:'Nghiên cứu vũ khí và giáp cho toàn quân. Yêu cầu Đại Bản Doanh cấp II.'},
  farm:{cost:{wood:60,stone:20},seconds:12,description:'Ruộng lương hữu hạn. Dân Phu phải canh tác và mang lương về kho.'},
- watchtower:{cost:{wood:120,stone:140,iron:20},seconds:24,description:'Tháp phòng thủ tự bắn quân địch trong 8 ô. Cấp cao tăng sát thương và tốc độ bắn; cần Đại Bản Doanh II.'},
+ watchtower:{cost:{wood:120,stone:140,iron:20},seconds:24,description:'Tháp phòng thủ tự bắn quân địch trong 8 ô. Cấp 1 bắn 1 tên, cấp 2 bắn 2 tên, cấp 3 bắn 4 tên; cần Đại Bản Doanh II.'},
  well:{cost:{wood:40,stone:80},seconds:14,description:'Giếng làng hồi 1/1,5/2 HP mỗi giây cho tối đa 3 bộ binh gần đó sau khi rời giao tranh.'}
 };
 Object.assign(B,{house:{name:'Nhà Dân',hp:260},forge:{name:'Lò Rèn',hp:550},farm:{name:'Nông Trang',hp:240},watchtower:{name:'Tháp Canh',hp:620},well:{name:'Giếng Làng',hp:320}});

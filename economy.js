@@ -56,7 +56,10 @@ class Game extends BaseGame {
   if(n.amount<1e-7){n.amount=0;if(n.kind==='wood')this.map[Math.floor(n.y)*W+Math.floor(n.x)]=0;}
   if(u.load.amount>=this.capacity(u)-1e-7||n.amount===0){w.phase='deposit';w.point=null;u.path=[];}
  }
- tick(dt){if(this.paused||this.pending!==null||this.result)return;super.tick(dt);if(this.pending!==null||this.result)return;this.syncFarms();for(const u of this.units)if(u.kind==='worker'&&u.hp>0&&!u.embarked&&u.work)this.workTick(u,Math.min(dt,.15));this.deliveries=this.deliveries.filter(d=>d.time>this.time-30);}
+ tick(dt){if(this.paused||this.pending!==null||this.result)return;super.tick(dt);if(this.pending!==null||this.result)return;this.syncFarms();
+  // Nông trang cạn kiệt tự động dỡ bỏ để xây trang mới ngay trên đất đó.
+  for(const b of this.buildings)if(b.kind==='farm'&&b.hp>0&&this.ready(b)&&!b.constructing){const n=this.nodes.find(n=>n.farm===b.id);if(n&&n.amount<=1e-7){b.hp=0;this.nodes=this.nodes.filter(x=>x!==n);this._occDirty=true;this.effects.push({type:'rubble',x:b.x,y:b.y,kind:'farm',life:1.2,max:1.2});if(b.owner===0)this.say('Nông Trang đã cạn kiệt · tự động dỡ bỏ — xây trang mới ngay trên đất này');}}
+  for(const u of this.units)if(u.kind==='worker'&&u.hp>0&&!u.embarked&&u.work)this.workTick(u,Math.min(dt,.15));this.deliveries=this.deliveries.filter(d=>d.time>this.time-30);}
  resolve(choice){const lord=this.pending,result=super.resolve(choice);if(!result)return result;this.say(choice==='ally'?'Thu phục '+api.LORDS[lord]+': mỏ vùng này giữ lại 30% hàng khai thác; không có thu nhập thụ động.':'Nhận chiến lợi phẩm một lần; 6 dân phu chờ bạn phân công ở Hoa Lư.');if(choice==='fallen'){const h=this.hall();if(h)for(let i=0;i<6;i++){const p=this.findOpen('worker',h,6,true);if(p)this.spawn('worker',p.x,p.y,0);}}return result;}
 }
 Object.assign(api,{Game,NODE_NAMES});return api;
