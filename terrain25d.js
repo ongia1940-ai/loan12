@@ -12,8 +12,8 @@ const WATER=t=>t===3||t===4;
 // Target elevation per tile type: 0 grass,1 mud,2 reeds,3 ford,4 deep river,5 hill,6 forest,7 cliff.
 const TARGET=[.06,-.03,0,-.2,-.34,.78,.16,1.3];
 const PRIORITY=[3,1,2,0,0,5,4,6]; // which tile bleeds over its neighbour at borders
-const PALETTE=[['#7fa64a','#a2b75c'],['#7a6646','#937c53'],['#9fa45c','#87984f'],['#5ea7a0','#4f9d97'],['#3a8a8e','#31797f'],['#a6a27a','#8e8a64'],['#6c9244','#5f853e'],['#a29f8c','#7d7c6c']];
-const SAND='#cdbd85';
+const PALETTE=[['#79a847','#9cbb58'],['#8a6f4a','#a3865c'],['#a9b25f','#8fa050'],['#55b8ae','#3fa39a'],['#207a9e','#146a8d'],['#b3a26e','#97865e'],['#5f9240','#527f36'],['#aaa695','#7f7c6e']];
+const SAND='#d6c28a';
 const hash=(x,y,i=0)=>{let n=Math.imul(x+17,374761393)^Math.imul(y+29,668265263)^Math.imul(i+1,1274126177);n=Math.imul(n^(n>>>13),1274126177);return((n^(n>>>16))>>>0)/4294967295;};
 const smooth=t=>t*t*(3-2*t);
 function value(x,y,i){const xi=Math.floor(x),yi=Math.floor(y),fx=smooth(x-xi),fy=smooth(y-yi),a=hash(xi,yi,i),b=hash(xi+1,yi,i),c=hash(xi,yi+1,i),d=hash(xi+1,yi+1,i);return a+(b-a)*fx+(c-a)*fy+(a-b-c+d)*fx*fy;}

@@ -5,7 +5,7 @@ const NODE_NAMES={wood:'Rừng gỗ',stone:'Mỏ đá',gold:'Mỏ vàng',iron:'M
 U.worker={name:'Dân Phu',cost:{food:40},hp:45,dmg:0,armor:0,arrow:0,range:0,speed:1.65,delay:1,tier:1,building:'hall'};
 B.storehouse={name:'Kho Tài Nguyên',hp:350};
 BUILD.storehouse={cost:{wood:80,stone:40},seconds:14,description:'Điểm nộp hàng gần mỏ. Dân phu phải mang hàng tới kho, nhà dân hoặc nhà chính mới tăng tài nguyên.'};
-BUILD.house.description='Tăng 8/12/16 dân số; tuyển Dân Phu, nhận hàng và phân công thợ ở gần tới rừng/mỏ. Không tự tạo tài nguyên.';
+BUILD.house.description='Mỗi Nhà Dân cho 10 dân số (tính cả lính); tuyển Dân Phu, nhận hàng và phân công thợ ở gần tới rừng/mỏ. Muốn tăng giới hạn quân phải xây thêm nhà mới. Không tự tạo tài nguyên.';
 BUILD.farm.description='Ruộng hữu hạn 1.000/1.500/2.000 Lương theo cấp. Cần Dân Phu làm ruộng rồi chở lương về kho.';
 TECH.logistics.description='+10% tốc độ khai thác mỗi bậc, không tự cộng tài nguyên.';
 class Game extends BaseGame {

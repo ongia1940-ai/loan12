@@ -50,7 +50,7 @@ test('every playable map keeps all bases connected by land (fords/passes) and ra
  const g=new L.Game('0',()=>.99,'random');assert.equal(g.mapProfile.id,L.PLAYABLE_MAPS[6]);
  const pass=new L.Game('0',()=>.5,'pass').map.filter(t=>t===7).length,isl=new L.Game('0',()=>.5,'islands').map.filter(t=>t===3||t===4).length,plain=new L.Game('0',()=>.5,'plains'),base=fresh();
  assert.ok(pass>100);assert.ok(isl>base.map.filter(t=>t===3||t===4).length*2);assert.ok(plain.map.filter(t=>t===1||t===2||t===5).length<base.map.filter(t=>t===1||t===2||t===5).length/2);});
-test('larger map sizes stretch the whole campaign layout and still simulate',()=>{for(const [size,w,h] of [['large',105,75],['huge',126,90]]){
+test('larger map sizes stretch the whole campaign layout and still simulate',()=>{for(const [size,w,h] of [['large',105,75],['huge',126,90],['epic',188,134]]){
  const out=execFileSync(process.execPath,['-e',`globalThis.LOAN12_MAP_SIZE='${size}';const L=require('./setup.js');const g=new L.Game('0',()=>.5,'coast',{aiCount:4});for(let i=0;i<300;i++)g.tick(.1);
   const halls=g.buildings.filter(b=>b.kind==='hall');const inside=[...g.units,...g.buildings,...g.nodes].every(e=>e.x>=0&&e.y>=0&&e.x<=L.W&&e.y<=L.H);const far=Math.max(...halls.map(b=>b.x));const water=g.map.slice(0).filter(t=>t===3||t===4).length;
   console.log(JSON.stringify({W:L.W,H:L.H,width:g.width,len:g.map.length,inside,far,halls:halls.length,water,landHalls:halls.every(b=>![4,7].includes(g.tile(b.x,b.y))),time:g.time}));`],{cwd:__dirname}).toString();

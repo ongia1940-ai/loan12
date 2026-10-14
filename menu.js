@@ -1,11 +1,11 @@
 // Loạn 12 Sứ Quân — màn hình chính / thiết lập trận trước khi vào chiến trường.
 'use strict';
 {
-const MENU_TILE=['#78914f','#6f5b3b','#5b8240','#6aa7ab','#2e6079','#a08d5f','#2f5a2e','#5a524b'];
+const MENU_TILE=['#79a847','#8a6f4a','#a9b25f','#55b8ae','#207a9e','#b3a26e','#5f9240','#aaa695'];
 const MENU_STORE='loan12.setup';
 const menuState=(()=>{let s=null;try{s=JSON.parse(localStorage.getItem(MENU_STORE)||'null');}catch(e){}s=Loan12.normalizeSetup(s||{});s.size=Loan12.MAP_SIZE;return s;})();
 function saveMenuState(){try{localStorage.setItem(MENU_STORE,JSON.stringify(menuState));}catch(e){}}
-window.matchSetup=function(){menuState.map=mapSelect.value;menuState.faction=factionSelect.value;saveMenuState();return Loan12.normalizeSetup({...menuState,size:Loan12.MAP_SIZE});}
+window.matchSetup=function(){menuState.map=mapSelect.value;menuState.faction=factionSelect.value;saveMenuState();return Loan12.normalizeSetup({...menuState,size:Loan12.MAP_SIZE,seed:(Math.random()*2**31)|0});}
 const menuDialog=document.querySelector('#intro');menuDialog.classList.add('main-menu');
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;};
 // ---------- header + tabs ----------

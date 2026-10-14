@@ -10,8 +10,26 @@ const RESOURCE_PRESETS={
 };
 const DIFFICULTY={easy:{name:'Dễ',gather:.7,stock:.7,attack:+70},normal:{name:'Thường',gather:1,stock:1,attack:0},hard:{name:'Khó',gather:1.35,stock:1.6,attack:-45}};
 const MAX_AI=11;
-function defaultSetup(){return {map:'riverlands',size:'standard',faction:'0',aiCount:MAX_AI,ai:Array.from({length:MAX_AI},()=>({faction:'auto',difficulty:'normal'})),resources:'standard'};}
-function normalizeSetup(s){const d=defaultSetup();s=s&&typeof s==='object'?s:{};const out={...d,...s};out.map=typeof out.map==='string'?out.map.slice(0,16):'riverlands';out.size=api.SIZES&&api.SIZES[out.size]?out.size:'standard';out.faction=out.faction==='random'?'random':String(Math.max(0,Math.min(11,Number.parseInt(out.faction,10)||0)));{const n=Number.parseInt(out.aiCount,10);out.aiCount=Number.isFinite(n)?Math.max(1,Math.min(MAX_AI,n)):MAX_AI;}out.resources=RESOURCE_PRESETS[out.resources]?out.resources:'standard';const ai=Array.isArray(s.ai)?s.ai:[];out.ai=d.ai.map((x,i)=>{const a=ai[i]||{};const f=a.faction==='random'||a.faction==='auto'?a.faction:Number.isInteger(Number(a.faction))&&a.faction!==''&&Number(a.faction)>=0&&Number(a.faction)<=11?String(Number(a.faction)):'auto';return {faction:f,difficulty:DIFFICULTY[a.difficulty]?a.difficulty:'normal'};});return out;}
+function defaultSetup(){return {map:'riverlands',size:'standard',faction:'0',aiCount:MAX_AI,ai:Array.from({length:MAX_AI},()=>({faction:'auto',difficulty:'normal'})),resources:'standard',seed:1};}
+// PRNG có seed riêng cho việc rải vị trí AI: cùng seed cho cùng một cách bố trí
+// trên mọi máy (kể cả phòng LAN), seed khác nhau cho mỗi trận chơi đơn.
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+// Xáo ngẫu nhiên vị trí các sứ quân AI giữa các "điểm đóng quân" có sẵn trên bản đồ.
+// Khi số sứ quân ít hơn số điểm (vd bản đồ 8 điểm nhưng chỉ 4 phe), mỗi AI chiếm một
+// điểm ngẫu nhiên — mỗi trận là một thế cờ khác. Phe người chơi (Hoa Lư) giữ nguyên.
+function scatterBases(g,seed){const owners=[];for(let o=1;o<=MAX_AI;o++){if(g.states[o]==='enemy'&&g.buildings.some(b=>b.owner===o&&b.kind==='hall'&&b.hp>0))owners.push(o);}
+ if(owners.length<2)return;const rnd=mulberry32(seed|0);
+ const anchors=owners.map(o=>{const h=g.buildings.find(b=>b.owner===o&&b.kind==='hall'&&b.hp>0);return{x:h.x,y:h.y};});
+ const order=anchors.map((_,i)=>i);
+ for(let i=order.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));const t=order[i];order[i]=order[j];order[j]=t;}
+ owners.forEach((o,k)=>{const from=anchors[k],to=anchors[order[k]],dx=to.x-from.x,dy=to.y-from.y;if(!dx&&!dy)return;
+  // Chỉ dời cụm căn cứ quanh hall cũ (bán kính 14 ô); tàu trinh sát / mỏ ở xa giữ nguyên vị trí.
+  const near=(x,y)=>Math.hypot(x-from.x,y-from.y)<=14,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  for(const b of g.buildings)if(b.owner===o&&b.hp>0&&near(b.x,b.y)){b.x=clamp(b.x+dx,.5,W-.5);b.y=clamp(b.y+dy,.5,H-.5);if(b.rally){b.rally.x=clamp(b.rally.x+dx,.5,W-.5);b.rally.y=clamp(b.rally.y+dy,.5,H-.5);}}
+  for(const u of g.units)if(u.owner===o&&u.hp>0&&near(u.x,u.y)){u.x=clamp(u.x+dx,.5,W-.5);u.y=clamp(u.y+dy,.5,H-.5);u.path=[];u.target=null;}
+  if(g.nodes)for(const n of g.nodes){if(n.farm){const f=g.buildings.find(b=>b.id===n.farm);if(f&&f.owner===o){n.x=f.x;n.y=f.y;}}else if(n.lord===o&&near(n.x,n.y)){n.x=clamp(n.x+dx,.5,W-.5);n.y=clamp(n.y+dy,.5,H-.5);}}});
+ g._occDirty=true;}
+function normalizeSetup(s){const d=defaultSetup();s=s&&typeof s==='object'?s:{};const out={...d,...s};out.map=typeof out.map==='string'?out.map.slice(0,16):'riverlands';out.size=api.SIZES&&api.SIZES[out.size]?out.size:'standard';out.faction=out.faction==='random'?'random':String(Math.max(0,Math.min(11,Number.parseInt(out.faction,10)||0)));{const n=Number.parseInt(out.aiCount,10);out.aiCount=Number.isFinite(n)?Math.max(1,Math.min(MAX_AI,n)):MAX_AI;}out.resources=RESOURCE_PRESETS[out.resources]?out.resources:'standard';const seedN=Number(out.seed);out.seed=Number.isFinite(seedN)?(seedN|0):1;const ai=Array.isArray(s.ai)?s.ai:[];out.ai=d.ai.map((x,i)=>{const a=ai[i]||{};const f=a.faction==='random'||a.faction==='auto'?a.faction:Number.isInteger(Number(a.faction))&&a.faction!==''&&Number(a.faction)>=0&&Number(a.faction)<=11?String(Number(a.faction)):'auto';return {faction:f,difficulty:DIFFICULTY[a.difficulty]?a.difficulty:'normal'};});return out;}
 // The campaign layout is authored on an 84×60 reference grid; larger maps stretch terrain and spread every base/unit/resource proportionally.
 function rescaleWorld(g){if(W===REF_W&&H===REF_H)return false;const sx=W/REF_W,sy=H/REF_H,old=g.map.slice();
  // fish and anything authored outside the reference area are regenerated after stretching
@@ -35,12 +53,12 @@ function applySetup(g,setup,random=Math.random){const s=normalizeSetup(setup);g.
   if(g.ai&&g.ai[owner])for(const k of RESOURCE)g.ai[owner].stock[k]=Math.round(g.ai[owner].stock[k]*res.ai*d.stock);}
  if(g.syncStats)for(const u of g.units)g.syncStats(u);g._occDirty=true;return g;}
 class Game extends Base{
- constructor(choice=0,random=Math.random,mapId='riverlands',setup=null){super(choice,random,mapId);rescaleWorld(this);if(setup)applySetup(this,setup,random);}
+ constructor(choice=0,random=Math.random,mapId='riverlands',setup=null){super(choice,random,mapId);rescaleWorld(this);if(setup)applySetup(this,setup,random);scatterBases(this,setup&&setup.seed||1);}
  saveGroup(number,ids){if(number<1||number>9)return;this.groups[number]=[...new Set(ids)].filter(id=>{const u=this.entity(id);return u&&u.owner===0;});}
  // Delete key: disband own units / buildings (the Đại Bản Doanh is protected from accidental deletion).
  destroyOwn(ids){let n=0;for(const id of ids||[]){const e=this.entity(id);if(!e||e.owner!==0||!(e.hp>0)||e.embarked||e.kind==='hall')continue;if(e.cargo&&e.cargo.length)continue;this.hit(e,e.hp+1e6,null);if(e.hp>0)e.hp=0;n++;}if(n){this._occDirty=true;this.say('Đã giải tán '+n+' đối tượng');}return n;}
  creditCargo(u,kind,amount){const d=u&&u.owner>0&&this.aiDifficulty&&DIFFICULTY[this.aiDifficulty[u.owner]];return super.creditCargo(u,kind,d?amount*d.gather:amount);}
  aiThink(owner){const a=this.ai&&this.ai[owner],before=a?a.lastAttack:0;const r=super.aiThink(owner);const d=this.aiDifficulty&&DIFFICULTY[this.aiDifficulty[owner]];if(a&&d&&d.attack&&a.lastAttack!==before)a.lastAttack+=d.attack;return r;}
 }
-Object.assign(api,{Game,RESOURCE_PRESETS,DIFFICULTY,MAX_AI,defaultSetup,normalizeSetup,applySetup,rescaleWorld});return api;
+Object.assign(api,{Game,RESOURCE_PRESETS,DIFFICULTY,MAX_AI,defaultSetup,normalizeSetup,applySetup,rescaleWorld,scatterBases,mulberry32});return api;
 });
